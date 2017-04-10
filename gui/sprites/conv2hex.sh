@@ -1,8 +1,10 @@
 #!/bin/bash
 
-if [ $# -ne "1" ]; then
-	exit 1
-fi
+for a in ans/*.ans; do
+	x=$(basename $a)
+	set +x
+	echo "$x"
+	hexdump -v -e '1/1 ",0x%02x"' $a > "hex/${x%.ans}".hex
+done
 
-hexdump -v -e '1/1 ",0x%02x"' $1 > "${1%.*}".hex
-
+set -x

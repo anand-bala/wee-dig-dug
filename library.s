@@ -1,4 +1,4 @@
-	AREA	libraryGPIO, CODE, READWRITE	
+	AREA	library, CODE, READWRITE	
 	EXPORT	uart_init
 	EXPORT	timer_init
 	EXPORT	pin_connect_block_setup
