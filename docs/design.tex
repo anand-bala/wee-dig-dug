@@ -1,5 +1,6 @@
 %This imports the file containing all of the configuration for the document
 \input{lib/preamble.tex}
+\usepackage{float}
 
 %header and Footer set up
 \lhead{anandbal, asingh42}% Left Heading(Must by you and your partners UBIT name)
@@ -7,12 +8,27 @@
 \rfoot{Page \thepage}% Right Footer - Page numbers
 \lfoot{R1}% Left Footer
 \title{Wee Dig Dug: Proposed Design}
-
+\author{
+	Anand Balakrishnan \\ \texttt{anandbal@buffalo.edu}
+	\and
+	Amrit Singh \\ \texttt{asingh42@buffalo.edu}
+}
 % Start the document
 \begin{document}
   %%%%%%%%%%%%%%%%%%%%%%%
-  
-  \tableofcontents\newpage
+
+\maketitle
+\tableofcontents\newpage
+
+
+\section{Overall Flowsheet}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{flowsheets/overall.png}
+	\caption{\label{fig:overall}Overall Flowsheet}
+\end{figure}
+\newpage
 
 \section{Model: model.s}
 
@@ -22,9 +38,11 @@ Maintains the internal representation of the whole game.
 
 The model will maintain the following information:
 
-1. Position and state of all sprites on board
-2. Position of all the sand using an array
-3. Score/Level
+\begin{enumerate}
+	\item Position and state of all sprites on board
+	\item Position of all the sand using an array
+	\item Score/Level
+\end{enumerate}
 
 \subsection{Subroutines}
 
@@ -48,7 +66,7 @@ The model consists of:
 \begin{enumerate}
   \item The board: 40 X 64 array of "blocks".
   \begin{itemize}
-    \item The board is a 40 X 64 byte array of blocks, each byte representing a boolean for sand, i.e, 1 = "sand" and 0 = "no sand".
+    \item The board is a 40 X 64 byte array of blocks, each byte representing a boolean for sand, i.e, 1 = sand and 0 = no sand.
     \item The array is created by reserving 40*64 = 2560 bytes of space in static memory by using the SPACE or FILL directives.
     \item \textbf{NOTE:} The size of the array can be changed to make the game more space efficient. This can be addressed in later versions of the game
     \item \textbf{NOTE:} The size of the board can be changed also, as the final game should work regardless of size.
