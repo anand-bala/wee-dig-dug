@@ -30,15 +30,15 @@ The model consists of:
 1. The board: 40 X 64 array of "blocks".
 	* The board is a 40 X 64 byte array of blocks, each byte representing a boolean for sand, i.e, 1 = "sand" and 0 = "no sand".
 	* The array is created by reserving 40*64 = 2560 bytes of space in static memory by using the SPACE or FILL directives.
-	* *NOTE:* The size of the array can be changed to make the game more space efficient. This can be addressed in later versions of the game
-	* *NOTE:* The size of the board can be changed also, as the final game should work regardless of size.
+	* **NOTE:** The size of the array can be changed to make the game more space efficient. This can be addressed in later versions of the game
+	* **NOTE:** The size of the board can be changed also, as the final game should work regardless of size.
 
 2. The sprites:
 	* Each type of sprite (Dug, his pump, Pookas and Fygars) maintains a position (the top left corner in GUI) and a state,
 	(direction of movement, velocity, DEAD or not).
 	* The character sprites (Dug, the Pookas and the Fygars) are each of size 4 X 4 blocks (hence occupying 16 blocks).
 	* Dug's pump is a sprite of height 1 block and variable length. This sprite has an additional state variable to hold length.
-	The length cannot exceed 4 blocks (*NOTE:* To be revised).
+	The length cannot exceed 4 blocks (**NOTE:** To be revised).
 
 ## gui.s
 
