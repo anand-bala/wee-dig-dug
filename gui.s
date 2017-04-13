@@ -45,7 +45,7 @@ ESC_cursor_position	= 27,"["
 ESC_cursor_pos_line	= "000"
 ESC_cursor_pos_sep	= ";"
 ESC_cursor_pos_col	= "000"
-ESC_cursor_pos_cmd	= "f"
+ESC_cursor_pos_cmd	= "f",0
 	ALIGN
 ;;;;;;;;;;;;;;;;;;;;;
 ;	SUBROUTINES		;
@@ -71,7 +71,10 @@ update_board
 	LDR v1, =ESC_cursor_pos_line
 	BL num_to_dec_str
 
-	LDR v1, =DUG_SPRITE		; move dug sprite
+	LDR v1, =ESC_cursor_position
+	BL output_string
+
+	LDR v1, =DUG_LEFT		; move dug sprite
 	BL output_string
 
 	LDMFD sp!, {lr, v1-v8}

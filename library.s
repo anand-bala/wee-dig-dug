@@ -702,7 +702,7 @@ num_to_dec_str
 num2dec_loop
 	CMP r1, #0				; compare r1 to 0
 	BLT num2dec_end		; end if < 0
-	LDR v3, [v2, r1]	; load power of 10
+	LDR v3, [v2, r1, LSL #2]	; load power of 10
 	CMP r0, v3				; compare power of 10 and value
 	SUBGE r0, r0, v3	; if value >= closest pow of 10, Subtract pow10 from val
 	ADDGE v4, v4, #1	; and increment digit

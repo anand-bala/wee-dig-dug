@@ -27,8 +27,21 @@
 	IMPORT	INT_ER
 	IMPORT	INT_SR
 	
-	IMPORT	update_board	
+	IMPORT	update_board
+	IMPORT	update_sprite
+	
 
+	IMPORT	DUG_SPRITE
+	IMPORT	X_POS
+	IMPORT	Y_POS	
+	IMPORT	LIVES	
+	IMPORT	DIRECTION
+	IMPORT	OLD_X_POS
+	IMPORT	OLD_Y_POS
+	IMPORT	DIR_UP
+	IMPORT	DIR_DOWN
+	IMPORT	DIR_LEFT
+	IMPORT	DIR_RIGHT
 
 HALF_SEC	DCD	0x8CA000
 
@@ -60,7 +73,7 @@ TIMER0_Interrupt
 
 		STMFD SP!, {r0-r12, lr}   	; Save registers r0-r12, lr
 		; Timer0 interrupt
-
+		BL update_board
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
 		
 		ORR r1, r1, #2		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #2
@@ -90,12 +103,64 @@ U0RDA	; UART0 RDA interrupts
 		BNE FIQ_Exit		  	; FIQ_Exit if not equal
 
 		; UART interrupt handler
-		
-
-
-
 		STMFD SP!, {r0-r12, lr}   	; Save registers r0-12 & lr
+		LDR v1, =DUG_SPRITE
+		
+		BL read_character
+		
+		CMP a1, #'w'
+		CMPNE a1, #'W'
+		BEQ	KEY_UP
 
+		CMP a1, #'a'
+		CMPNE a1, #'A'
+		BEQ	KEY_LEFT
+		
+		CMP a1, #'s'
+		CMPNE a1, #'S'
+		BEQ	KEY_DOWN
+
+		CMP a1, #'d'
+		CMPNE a1, #'D'
+		BEQ	KEY_RIGHT
+
+		BAL U0RDA_end
+		; TODO: check for collisions
+KEY_UP
+		MOV a1, #-1
+		LDR a2, [v1, #Y_POS]
+		SUB a2, a2, #1
+		MOV a3, #-1
+		MOV a4, #DIR_UP
+		BAL	U0RDA_update
+
+KEY_DOWN
+		MOV a1, #-1
+		LDR a2, [v1, #Y_POS]
+		ADD a2, a2, #1
+		MOV a3, #-1
+		MOV a4, #DIR_DOWN	
+		BAL	U0RDA_update
+
+KEY_LEFT
+		LDR a1, [v1, #X_POS]
+		SUB a1, a1, #1
+		MOV a2, #-1
+		MOV a3, #-1
+		MOV a4, #DIR_LEFT	
+		BAL	U0RDA_update
+
+KEY_RIGHT
+		LDR a1, [v1, #X_POS]
+		ADD a1, a1, #1
+		MOV a2, #-1
+		MOV a3, #-1
+		MOV a4, #DIR_RIGHT	
+		BAL	U0RDA_update
+
+
+U0RDA_update
+		BL update_sprite
 U0RDA_end
 		LDMFD SP!, {r0-r12, lr}   	; Restore registers r0-r12, lr	
 
