@@ -1,29 +1,61 @@
 	AREA GUI, CODE, READWRITE
 	
-	IMPORT	DUG_LEFT
-	
+	; Information about board	
 	IMPORT	BOARD_WIDTH
 	IMPORT	BOARD_HEIGHT
+
+	; Constants to access Sprite Structure
 	IMPORT	X_POS
 	IMPORT	Y_POS	
 	IMPORT	LIVES	
 	IMPORT	DIRECTION
 	IMPORT	OLD_X_POS
 	IMPORT	OLD_Y_POS
-	
+
+	; Other Constants
+	IMPORT	DIR_UP
+	IMPORT	DIR_DOWN
+	IMPORT	DIR_LEFT
+	IMPORT	DIR_RIGHT
+
+	; Board data
 	IMPORT	GAME_BOARD
 	IMPORT	HIGH_SCORE
 	IMPORT	LEVEL
 	
+	; Sprite Structures
 	IMPORT	DUG_SPRITE
 	IMPORT	FYGAR_SPRITE_1
 	IMPORT	POOKA_SPRITE_1
 	IMPORT	POOKA_SPRITE_2
 
+	; Library subroutines
 	IMPORT	num_to_dec_str
 	IMPORT	output_string
 
-	EXPORT	update_board
+	; GUI routines (EXPORT)
+	EXPORT	update_board	
+
+
+;;;;;;;;;;;;;;;;;;;;;
+;	SPRITES		;
+;;;;;;;;;;;;;;;;;;;;;
+
+
+
+DUG_GUI
+	DCB	"^"	; Face UP
+	DCB	"v"	; Face DOWN
+	DCB	"<"	; Face LEFT
+	DCB	">"	; Face RIGHT
+
+FYGAR_GUI
+	DCB	"X"
+
+POOKA_GUI
+	DCB	"O"
+
+	ALIGN
 
 
 ;;;;;;;;;;;;;;;;;;;;;
