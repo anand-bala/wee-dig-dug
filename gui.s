@@ -90,8 +90,8 @@ CURRENT_SCORE_val	=	"000000",10,13,0
 ;;;;;;;;;;;;;;;;;;;;;
 
 PIXEL_SIZE	EQU	1
-GUI_Y_ORIGIN	EQU	3
-GUI_X_ORIGIN	EQU	1
+GUI_Y_ORIGIN	EQU	2
+GUI_X_ORIGIN	EQU	2
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;	GUI MANIPULATION	;
@@ -112,7 +112,8 @@ ESC_show_cursor		= 27,"[?25h",0
 
 draw_empty_board
 	STMFD sp!, {lr, v1-v8}
-
+	LDR v1, =ESC_hide_cursor
+	BL output_string
 	LDR v1, =ESC_cursor_origin
 	BL output_string
 	LDR v1, =BOARD_GUI
@@ -132,6 +133,26 @@ update_board
 	; v8 = sprite addresses
 
 	LDR v8, =DUG_SPRITE
+
+	; Load Old X position and clear at position
+	LDR a1, [v8, #OLD_X_POS]
+	ADD a1, a1, #GUI_X_ORIGIN
+	MOV	a2, #3					; 3 char wide string
+	LDR v1, =ESC_cursor_pos_col
+	BL num_to_dec_str
+
+	; Load Old Y position and clear at position
+	LDR a1, [v8, #OLD_Y_POS]
+	ADD a1, a1, #GUI_Y_ORIGIN
+	MOV	a2, #3					; 3 char wide string
+	LDR v1, =ESC_cursor_pos_line
+	BL num_to_dec_str
+
+	LDR v1, =ESC_cursor_position
+	BL output_string
+	
+	MOV a1, #' '
+	BL output_character
 	
 	; Load X position and draw at position
 	LDR a1, [v8, #X_POS]
@@ -153,26 +174,6 @@ update_board
 	LDR ip, [v8, #DIRECTION]	; get current direction Dug is facing
 	LDR v1, =DUG_GUI 			; load address for Dug GUI
 	LDRB a1, [v1, ip]		   	; load character for direction
-	BL output_character
-
-	; Load Old X position and clear at position
-	LDR a1, [v8, #OLD_X_POS]
-	ADD a1, a1, #GUI_X_ORIGIN
-	MOV	a2, #3					; 3 char wide string
-	LDR v1, =ESC_cursor_pos_col
-	BL num_to_dec_str
-
-	; Load Old Y position and clear at position
-	LDR a1, [v8, #OLD_Y_POS]
-	ADD a1, a1, #GUI_Y_ORIGIN
-	MOV	a2, #3					; 3 char wide string
-	LDR v1, =ESC_cursor_pos_line
-	BL num_to_dec_str
-
-	LDR v1, =ESC_cursor_position
-	BL output_string
-	
-	MOV a1, #' '
 	BL output_character
 
 	LDMFD sp!, {lr, v1-v8}

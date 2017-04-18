@@ -276,27 +276,38 @@ reset_board_loop
 ;			a3 = lives
 ;			a4 = direction
 ;			v1 = Address to sprite
-; To not update at all, pass -1
+; to not update direction and lives, set
 update_sprite
 	STMFD	sp!, {lr, v1-v2}
 
+
+update_x
+	CMP a1, #0
+	BLT update_y
+	CMP a1, #18
+	BGT update_y
 	CMP a1, #-1	; check whether to update x position or not
 	; if != -1 (update = true):
-	LDRNE v2, [v1, #X_POS]	; temporarily hold old x_pos
-	STRNE v2, [v1, #OLD_X_POS]	; store old x position
+	LDR v2, [v1, #X_POS]	; temporarily hold old x_pos
+	STR v2, [v1, #OLD_X_POS]	; store old x position
    	STRNE a1, [v1, #X_POS]	; update X_POS value for given sprite
 
+update_y
+	CMP a2, #0
+	BLT update_lives
+	CMP a2, #14
+	BGT update_lives
 	CMP a2, #-1	; check whether to update y position or not
 	; if != -1 (update = true):
-	LDRNE v2, [v1, #Y_POS]	; temporarily hold old y_pos
-	STRNE v2, [v1, #OLD_Y_POS]	; store old y position
+	LDR v2, [v1, #Y_POS]	; temporarily hold old y_pos
+	STR v2, [v1, #OLD_Y_POS]	; store old y position
    	STRNE a2, [v1, #Y_POS]	; update Y_POS value for given sprite
 
-
+update_lives
 	CMP a3, #-1	; check whether to update LIVES or not
 	; if != -1 (update = true):
    	STRNE a3, [v1, #LIVES]	; update LIVES value for given sprite
-	
+update_dir
 	CMP a4, #-1	; check whether to update DIRECTION or not
 	; if != -1 (update = true):
    	STRNE a4, [v1, #DIRECTION]	; update DIRECTION value for given sprite

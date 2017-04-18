@@ -45,10 +45,11 @@
 	IMPORT	DIR_LEFT
 	IMPORT	DIR_RIGHT
 
-HALF_SEC	DCD	0x8CA000
-TIMER_100ms	DCD	0x1194000
+HALF_SEC	DCD	0x08CA000
+TIMER_100ms	DCD	0x1C2000
 
-EXIT_P	=	0,0
+EXIT_P		=	0,0
+UPDATE_P	=	0,0
 	ALIGN
 
 weedigdug
@@ -95,6 +96,9 @@ TIMER0_Interrupt
 		STMFD SP!, {r0-r12, lr}   	; Save registers r0-r12, lr
 		; Timer0 interrupt
 		BL update_board
+		LDR v1, =UPDATE_P
+		MOV ip, #0
+		STR ip, [v1]				; reset update flag
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
 		
 		ORR r1, r1, #2		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #2
@@ -128,60 +132,60 @@ U0RDA	; UART0 RDA interrupts
 		LDR v1, =DUG_SPRITE
 		
 		BL read_character
+		MOV ip, a1			; hold character in ip
+
+		LDMIA v1, {a1-a2}	; load DUG_SPRITE coordinates
+		MOV a3, #-1			; dont update lives
 		
-		CMP a1, #'w'
-		CMPNE a1, #'W'
+		CMP ip, #'w'
+		CMPNE ip, #'W'
 		BEQ	KEY_UP
 
-		CMP a1, #'a'
-		CMPNE a1, #'A'
+		CMP ip, #'a'
+		CMPNE ip, #'A'
 		BEQ	KEY_LEFT
 		
-		CMP a1, #'s'
-		CMPNE a1, #'S'
+		CMP ip, #'s'
+		CMPNE ip, #'S'
 		BEQ	KEY_DOWN
 
-		CMP a1, #'d'
-		CMPNE a1, #'D'
+		CMP ip, #'d'
+		CMPNE ip, #'D'
 		BEQ	KEY_RIGHT
 
 		BAL U0RDA_end
 		; TODO: check for collisions
 KEY_UP
-		MOV a1, #-1
 		LDR a2, [v1, #Y_POS]
 		SUB a2, a2, #1
-		MOV a3, #-1
 		MOV a4, #DIR_UP
 		BAL	U0RDA_update
 
 KEY_DOWN
-		MOV a1, #-1
 		LDR a2, [v1, #Y_POS]
 		ADD a2, a2, #1
-		MOV a3, #-1
 		MOV a4, #DIR_DOWN	
 		BAL	U0RDA_update
 
 KEY_LEFT
 		LDR a1, [v1, #X_POS]
 		SUB a1, a1, #1
-		MOV a2, #-1
-		MOV a3, #-1
 		MOV a4, #DIR_LEFT	
 		BAL	U0RDA_update
 
 KEY_RIGHT
 		LDR a1, [v1, #X_POS]
 		ADD a1, a1, #1
-		MOV a2, #-1
-		MOV a3, #-1
 		MOV a4, #DIR_RIGHT	
 		BAL	U0RDA_update
-
-
 U0RDA_update
+		LDR v2, =UPDATE_P
+		LDRB ip, [v2]		
+		CMP ip, #0		; if update board has not happened	 (update != 0)
+		BNE U0RDA_end 	; skip current update
 		BL update_sprite
+		MOV ip, #1
+		STRB ip, [v2]	; set update flag
 U0RDA_end
 		LDMFD SP!, {r0-r12, lr}   	; Restore registers r0-r12, lr	
 
