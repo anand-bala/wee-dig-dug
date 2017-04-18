@@ -44,6 +44,7 @@
 	IMPORT	DIR_RIGHT
 
 HALF_SEC	DCD	0x8CA000
+TIMER_100ms	DCD	0x1194000
 
 weedigdug
 	STMFD sp!, {lr}
@@ -51,7 +52,7 @@ weedigdug
 	BL uart_init
 	BL interrupt_init
 	
-	LDR v1, =HALF_SEC
+	LDR v1, =TIMER_100ms
 	LDR r0, [v1]
 	BL timer_init
 	MOV r0, #12

@@ -28,9 +28,12 @@
 ;	CONSTANTS		;
 ;;;;;;;;;;;;;;;;;;;;;
 
-BOARD_WIDTH		EQU	64
-BOARD_HEIGHT	EQU 64
-BOARD_BYTE_SIZE	EQU	2560
+BOARD_WIDTH		EQU	19
+BOARD_HEIGHT	EQU 15
+BOARD_SIZE		EQU	19*15
+BOARD_CENTER_X	EQU BOARD_WIDTH/2
+BOARD_CENTER_Y	EQU BOARD_HEIGHT/2
+
 
 X_POS		EQU	0*4
 Y_POS		EQU	1*4
@@ -49,32 +52,32 @@ DIR_RIGHT	EQU	3
 ;;;;;;;;;;;;;;;;;;;;;
 
 DUG_SPRITE			; State of the Dug sprite
-	DCD	32			; x position
-	DCD	20			; y position
+	DCD	10			; x position
+	DCD	7			; y position
 	DCD	4			; lives
 	DCD	DIR_LEFT   	; direction
 	DCD	32			; Old X
 	DCD 20			; Old Y
 
 FYGAR_SPRITE_1		; State of 1st Fygar sprite
-	DCD 16			; x position
-	DCD 16			; y position
+	DCD 1			; x position
+	DCD 1			; y position
 	DCD 1			; lives
 	DCD	DIR_RIGHT	; direction
 	DCD	32			; Old X
 	DCD 20			; Old Y
 
 POOKA_SPRITE_1		; State of 1st Pooka sprite
-	DCD 60			; x position
-	DCD 16			; y position
+	DCD 10			; x position
+	DCD 1			; y position
 	DCD 1			; lives
 	DCD	DIR_UP		; direction
 	DCD	60			; Old X
 	DCD 16			; Old Y
 
 POOKA_SPRITE_2		; State of 2nd Pooka sprite
-	DCD 16			; x position
-	DCD 36			; y position
+	DCD 15			; x position
+	DCD 15			; y position
 	DCD 1			; lives
 	DCD	DIR_DOWN	; direction
 	DCD	16			; Old X
@@ -90,6 +93,102 @@ GAME_BOARD	FILL	2560, 0x01, 1	; Define a 2560 byte array with 1 byte 1s signifyi
 ;;;;;;;;;;;;;;;;;;;;;
 ;	SUBROUTINES		;
 ;;;;;;;;;;;;;;;;;;;;;
+
+
+reset_model
+	STMFD sp!, {lr, v1-v8}
+
+	; Reset the board to initial state
+	LDR v1, =GAME_BOARD
+	MOV v2, #BOARD_SIZE
+	MOV ip, #1
+reset_board_loop
+	STRB ip, [v1], #1	; Store 1 byte at current index on board and increment index (sand by default)
+	SUBS v2, #1			; Decrement residual index (and set CPSR)
+	BGT reset_board_loop ; Loop while index > 0
+
+; Set Dug sprite to center with 4 lives	and looking left
+	LDR v1, =DUG_SPRITE
+	MOV a1, #BOARD_CENTER_X
+	MOV a2, #BOARD_CENTER_Y
+	MOV a3, #4
+	MOV a4, #DIR_LEFT
+	BL update_sprite
+
+	
+; Set Fygar1 to random position
+	LDR v1, =FYGAR_SPRITE_1
+	; Set random dir
+	MOV a1, #2			; get random 4bit number for direction [0-3]
+	BL get_nbit_rand
+	MOV a4, a1			; move returned random number to a4
+	; Set Number of lives = 1
+	MOV a3, #1
+	; set random Y in range [0-15]	 (4 bit)
+	MOV a1, #4
+	BL get_nbit_rand
+	MOV a2, a1
+	; set random X in range [0-19]	(5 bit with check)
+	MOV a1, #5
+	BL get_nbit_rand
+	CMP a1, #20
+	MOVGE a1, #19	
+	; update sprite
+	STMFD sp!, {a1, a2}	; save and restore x and y position
+	BL update_sprite
+	LDMFD sp!, {a1, a2}
+	; Clear sand for Fygar1 movement
+	LDR v1, =GAME_BOARD
+
+
+; Set Pooka1 to random position
+	LDR v1, =POOKA_SPRITE_1
+	; Set random dir
+	MOV a1, #2			; get random 4bit number for direction [0-3]
+	BL get_nbit_rand
+	MOV a4, a1			; move returned random number to a4
+	; Set Number of lives = 1
+	MOV a3, #1
+	; set random Y in range [0-15]	 (4 bit)
+	MOV a1, #4
+	BL get_nbit_rand
+	MOV a2, a1
+	; set random X in range [0-19]	(5 bit with check)
+	MOV a1, #5
+	BL get_nbit_rand
+	CMP a1, #20
+	MOVGE a1, #19	
+	; update sprite	
+	STMFD sp!, {a1, a2}	; save and restore x and y position
+	BL update_sprite
+	LDMFD sp!, {a1, a2}
+
+; Set Pooka2 to random position
+	LDR v1, =POOKA_SPRITE_2
+	; Set random dir
+	MOV a1, #2			; get random 4bit number for direction [0-3]
+	BL get_nbit_rand
+	MOV a4, a1			; move returned random number to a4
+	; Set Number of lives = 1
+	MOV a3, #1
+	; set random Y in range [0-15]	 (4 bit)
+	MOV a1, #4
+	BL get_nbit_rand
+	MOV a2, a1
+	; set random X in range [0-19]	(5 bit with check)
+	MOV a1, #5
+	BL get_nbit_rand
+	CMP a1, #20
+	MOVGE a1, #19	
+	; update sprite
+	STMFD sp!, {a1, a2}	; save and restore x and y position
+	BL update_sprite
+	LDMFD sp!, {a1, a2}
+; Clear sand for sprite movement
+
+
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
 
 
 ; Update data for a sprite
@@ -125,6 +224,15 @@ update_sprite
    	STRNE a2, [v1, #DIRECTION]	; update DIRECTION value for given sprite
 
 	LDMFD	sp!, {lr, v1-v8}
+	BX lr
+
+;
+clear_sand_at_x_y  ; coordinate on array = y + (width*x)
+	STMFD sp!, {lr, v1-v8}
+	LDR v1, =GAME_BOARD
+	MOV ip, #0
+	ADD a2, a2, a1, LSL #BOARD_WIDTH
+   	LDMFD	sp!, {lr, v1-v8}
 	BX lr
 
 	END
