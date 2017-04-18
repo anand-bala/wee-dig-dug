@@ -29,7 +29,9 @@
 	
 	IMPORT	update_board
 	IMPORT	update_sprite
-	
+	IMPORT	draw_empty_board	
+	IMPORT	clear_at_x_y
+	IMPORT	reset_model
 
 	IMPORT	DUG_SPRITE
 	IMPORT	X_POS
@@ -46,22 +48,40 @@
 HALF_SEC	DCD	0x8CA000
 TIMER_100ms	DCD	0x1194000
 
+EXIT_P	=	0,0
+	ALIGN
+
 weedigdug
 	STMFD sp!, {lr}
 	BL pin_connect_block_setup
 	BL uart_init
 	BL interrupt_init
 	
-	LDR v1, =TIMER_100ms
-	LDR r0, [v1]
-	BL timer_init
 	MOV r0, #12
 	BL output_character
 
-	BL update_board
+	BL reset_model
+	BL draw_empty_board
+	LDR v1, =EXIT_P
 
+	LDR v1, =TIMER_100ms
+	LDR r0, [v1]
+	BL timer_init
+game_loop
+	LDRB a1, [v1]	; load exit_p
+	CMP a1, #0
+	BEQ game_loop	; if exit_p = 0: loop
 	LDMFD sp!, {lr}
 	BX lr
+
+; Detect collision of sprite with
+; 0 -> nothing
+; 1 -> Sand
+; 2 -> Wall
+; 3 -> Enemy
+; input
+;		v1 = address to sprite
+detect_sprite_collision
 
 FIQ_Handler
 		STMFD SP!, {r0-r12, lr}  	; Save registers r0-r12, lr

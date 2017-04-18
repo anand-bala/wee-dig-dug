@@ -32,16 +32,16 @@
 	; Library subroutines
 	IMPORT	num_to_dec_str
 	IMPORT	output_string
+	IMPORT	output_character
 
 	; GUI routines (EXPORT)
-	EXPORT	update_board	
+	EXPORT	update_board
+	EXPORT	draw_empty_board	
 
 
 ;;;;;;;;;;;;;;;;;;;;;
-;	SPRITES		;
+;	GUI ELEMENTS	;
 ;;;;;;;;;;;;;;;;;;;;;
-
-
 
 DUG_GUI
 	DCB	"^"	; Face UP
@@ -55,59 +55,125 @@ FYGAR_GUI
 POOKA_GUI
 	DCB	"O"
 
-	ALIGN
+SAND_GUI
+	DCB	"#"
 
+BOARD_GUI
+	DCB	"ZZZZZZZZZZZZZZZZZZZZZ",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB "Z                   Z",13,10
+	DCB	"ZZZZZZZZZZZZZZZZZZZZZ",13,10,0
+
+HIGH_SCORE_str	=	"HIGH SCORE: "
+HIGH_SCORE_val	=	"000000",10,13,0
+
+CURRENT_SCORE_str	=	"SCORE: "
+CURRENT_SCORE_val	=	"000000",10,13,0
+
+	ALIGN
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	CONSTANTS		;
 ;;;;;;;;;;;;;;;;;;;;;
 
-DIR_UP		EQU	0
-DIR_DOWN	EQU	1
-DIR_LEFT	EQU	2
-DIR_RIGHT	EQU	3
-
-PIXEL_SIZE	EQU	4	; each pixel = 4x4
+PIXEL_SIZE	EQU	1
+GUI_Y_ORIGIN	EQU	3
+GUI_X_ORIGIN	EQU	1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;	GUI MANIPULATION	;
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
+ESC_cursor_origin	= 27,"[0;0f",0
 ESC_cursor_position	= 27,"["
 ESC_cursor_pos_line	= "000"
 ESC_cursor_pos_sep	= ";"
 ESC_cursor_pos_col	= "000"
 ESC_cursor_pos_cmd	= "f",0
+ESC_hide_cursor		= 27,"[?25l",0
+ESC_show_cursor		= 27,"[?25h",0
 	ALIGN
 ;;;;;;;;;;;;;;;;;;;;;
 ;	SUBROUTINES		;
 ;;;;;;;;;;;;;;;;;;;;;
 
+draw_empty_board
+	STMFD sp!, {lr, v1-v8}
+
+	LDR v1, =ESC_cursor_origin
+	BL output_string
+	LDR v1, =BOARD_GUI
+	BL output_string
+	LDR v1, =CURRENT_SCORE_str
+	BL output_string
+   	LDR v1, =HIGH_SCORE_str
+	BL output_string
+
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
+	
+
 update_board
 	STMFD sp!, {lr, v1-v8}
 
-	LDR v2, =DUG_SPRITE
+	; v8 = sprite addresses
+
+	LDR v8, =DUG_SPRITE
 	
-	; TODO: Write a clear block routine
 	; Load X position and draw at position
-	LDR v3, [v2, #X_POS]
-	LSL a1, v3, #PIXEL_SIZE		; Adjust sprite to pixel size, a1 = argument to convert to string
+	LDR a1, [v8, #X_POS]
+	ADD a1, a1, #GUI_X_ORIGIN
 	MOV	a2, #3					; 3 char wide string
 	LDR v1, =ESC_cursor_pos_col
 	BL num_to_dec_str
 
 	; Load Y position and draw at position
-	LDR v3, [v2, #Y_POS]
-	LSL a1, v3, #PIXEL_SIZE		; Adjust sprite to pixel size, a1 = argument to convert to string
+	LDR a1, [v8, #Y_POS]
+	ADD a1, a1, #GUI_Y_ORIGIN
 	MOV	a2, #3					; 3 char wide string
 	LDR v1, =ESC_cursor_pos_line
 	BL num_to_dec_str
 
 	LDR v1, =ESC_cursor_position
 	BL output_string
+	
+	LDR ip, [v8, #DIRECTION]	; get current direction Dug is facing
+	LDR v1, =DUG_GUI 			; load address for Dug GUI
+	LDRB a1, [v1, ip]		   	; load character for direction
+	BL output_character
 
-	LDR v1, =DUG_LEFT		; move dug sprite
+	; Load Old X position and clear at position
+	LDR a1, [v8, #OLD_X_POS]
+	ADD a1, a1, #GUI_X_ORIGIN
+	MOV	a2, #3					; 3 char wide string
+	LDR v1, =ESC_cursor_pos_col
+	BL num_to_dec_str
+
+	; Load Old Y position and clear at position
+	LDR a1, [v8, #OLD_Y_POS]
+	ADD a1, a1, #GUI_Y_ORIGIN
+	MOV	a2, #3					; 3 char wide string
+	LDR v1, =ESC_cursor_pos_line
+	BL num_to_dec_str
+
+	LDR v1, =ESC_cursor_position
 	BL output_string
+	
+	MOV a1, #' '
+	BL output_character
 
 	LDMFD sp!, {lr, v1-v8}
 	BX lr

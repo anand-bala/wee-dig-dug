@@ -788,4 +788,8 @@ is_positive
 	LDMFD r13!, {r2-r12, r14}
 	BX lr		; Return to the C program
 
+multiply_end
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
+
 	END
