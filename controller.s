@@ -9,34 +9,34 @@
 	IMPORT	interrupt_disable
 
 	IMPORT	read_timer0
-	
+
 	IMPORT	clear_7_seg
 	IMPORT	display_digit_on_7_seg
 	IMPORT	output_string
 	IMPORT	output_character
 	IMPORT	read_character
 	IMPORT	num_to_dec_str
-	
+
 	IMPORT	get_nbit_rand
 
-	IMPORT	U0IER	
+	IMPORT	U0IER
 	IMPORT	U0IIR
 	IMPORT	EXTINT
 	IMPORT	INTBASE
 	IMPORT	INT_CR
 	IMPORT	INT_ER
 	IMPORT	INT_SR
-	
+
 	IMPORT	update_board
 	IMPORT	update_sprite
-	IMPORT	draw_empty_board	
+	IMPORT	draw_empty_board
 	IMPORT	clear_at_x_y
 	IMPORT	reset_model
 
 	IMPORT	DUG_SPRITE
 	IMPORT	X_POS
-	IMPORT	Y_POS	
-	IMPORT	LIVES	
+	IMPORT	Y_POS
+	IMPORT	LIVES
 	IMPORT	DIRECTION
 	IMPORT	OLD_X_POS
 	IMPORT	OLD_Y_POS
@@ -66,7 +66,7 @@ weedigdug
 	LDR v1, =EXIT_P
 	LDR v2, =RUN_P
 game_begin
-	BL read_character 
+	BL read_character
 
 	BL reset_model
 	LDR a1, =TIMER_100ms
@@ -116,45 +116,45 @@ detect_sprite_collision
 	BAL collision_end
 
 is_dug_check
-; Sprite is Dug. 
+; Sprite is Dug.
 ; 1. Check for fatal collision (with fygar or pooka)
 	LDR v8, =FYGAR_SPRITE_1		; Load FYGAR
 	; Check if X Positions are equal
 	LDR ip, [v8, #X_POS]		; Load its X POSITION
 	CMP ip, a2			; Compare the X positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL) 
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
 	BEQ collision_end
 
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL) 
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
 	BEQ collision_end
 
 	LDR v8, =POOKA_SPRITE_1		; Load POOKA
 	; Check if X Positions are equal
 	LDR ip, [v8, #X_POS]		; Load its X POSITION
 	CMP ip, a2			; Compare the X positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL) 
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
 	BEQ collision_end
 
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL) 
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
 	BEQ collision_end
 
 	LDR v8, =POOKA_SPRITE_2		; Load POOKA1
 	; Check if X Positions are equal
 	LDR ip, [v8, #X_POS]		; Load its X POSITION
 	CMP ip, a2			; Compare the X positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL) 
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
 	BEQ collision_end
 
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL) 
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
 	BEQ collision_end
 
 ; 2. check for wall collision
@@ -189,13 +189,13 @@ is_fygar_check
 	; Check if X Positions are equal
 	LDR ip, [v8, #X_POS]		; Load its X POSITION
 	CMP ip, a2			; Compare the X positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL) 
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
 	BEQ collision_end
 
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL) 
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
 	BEQ collision_end
 
 ; 2. Check for wall collision
@@ -269,7 +269,7 @@ TIMER0_Interrupt
 		MOV ip, #0
 		STR ip, [v1]				; reset update flag
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
-		
+
 		ORR r1, r1, #2		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #2
 		STR r1, [r0]	   	; store clear value (r1) into 0xE0004000 (r0)
 
@@ -278,15 +278,15 @@ EINT1_interrupt	; Check for EINT1 interrupt
 		LDR r1, [r0]			  	; load value from 0xE01FC140
 		TST r1, #2				  	; test value with #2
 		BEQ U0RDA				  	; branch if eq to handle UART0 instead
-	
-		STMFD SP!, {r0-r12, lr}   	; Save registers r0-r12, lr 
-			
+
+		STMFD SP!, {r0-r12, lr}   	; Save registers r0-r12, lr
+
 		; Push button EINT1 Handling Code
 
-EINT1_end	
+EINT1_end
 
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
-		
+
 		ORR r1, r1, #2		; Clear Interrupt by OR-ing value from 0xE01FC140 (r1) with #2
 		STR r1, [r0]	   	; store clear value (r1) into 0xE01FC140 (r0)
 
@@ -299,13 +299,13 @@ U0RDA	; UART0 RDA interrupts
 		; UART interrupt handler
 		STMFD SP!, {r0-r12, lr}   	; Save registers r0-12 & lr
 		LDR v1, =DUG_SPRITE
-		
+
 		BL read_character
 		MOV ip, a1			; hold character in ip
 
 		LDMIA v1, {a1-a2}	; load DUG_SPRITE coordinates
 		MOV a3, #-1			; dont update lives
-		
+
 		CMP ip, #'w'
 		CMPNE ip, #'W'
 		BEQ	KEY_UP
@@ -313,7 +313,7 @@ U0RDA	; UART0 RDA interrupts
 		CMP ip, #'a'
 		CMPNE ip, #'A'
 		BEQ	KEY_LEFT
-		
+
 		CMP ip, #'s'
 		CMPNE ip, #'S'
 		BEQ	KEY_DOWN
@@ -333,33 +333,33 @@ KEY_UP
 KEY_DOWN
 		LDR a2, [v1, #Y_POS]
 		ADD a2, a2, #1
-		MOV a4, #DIR_DOWN	
+		MOV a4, #DIR_DOWN
 		BAL	U0RDA_update
 
 KEY_LEFT
 		LDR a1, [v1, #X_POS]
 		SUB a1, a1, #1
-		MOV a4, #DIR_LEFT	
+		MOV a4, #DIR_LEFT
 		BAL	U0RDA_update
 
 KEY_RIGHT
 		LDR a1, [v1, #X_POS]
 		ADD a1, a1, #1
-		MOV a4, #DIR_RIGHT	
+		MOV a4, #DIR_RIGHT
 		BAL	U0RDA_update
 U0RDA_update
 		LDR v2, =UPDATE_P
-		LDRB ip, [v2]		
+		LDRB ip, [v2]
 		CMP ip, #0		; if update board has not happened	 (update != 0)
 		BNE U0RDA_end 	; skip current update
 		BL update_sprite
 		MOV ip, #1
 		STRB ip, [v2]	; set update flag
 U0RDA_end
-		LDMFD SP!, {r0-r12, lr}   	; Restore registers r0-r12, lr	
+		LDMFD SP!, {r0-r12, lr}   	; Restore registers r0-r12, lr
 
 FIQ_Exit
-		LDMFD SP!, {r0-r12, lr}	  	; Restore registers r0-r12, lr	
+		LDMFD SP!, {r0-r12, lr}	  	; Restore registers r0-r12, lr
 		SUBS pc, lr, #4				; pc = lr - 4
 
 

@@ -104,13 +104,24 @@ CURRENT_SCORE	DCD 0
 GAME_BOARD	FILL BOARD_SIZE, 0x00, 1	; Define a 2560 byte array with 1 byte 1s signifying sand
 	ALIGN
 BEGIN_GAME	= 0,0	; Boolean to start game
+	ALIGN
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Fields to help synchronization of movement ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+UPDATE_DUG_P	DCB	0,0
+	ALIGN
+DIR_TO_MOVE_DUG	DCD	DIR_LEFT
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	SUBROUTINES		;
 ;;;;;;;;;;;;;;;;;;;;;
 
 
+;;;;;;;;;;;;;;;
+; RESET MODEL :
+;;;;;;;;;;;;;;;
 reset_model
 	STMFD sp!, {lr, v1-v8}
 
@@ -280,6 +291,18 @@ reset_board_loop
 	MOV	a2, v3	   	; y
 	BL clear_at_x_y
 
+; Make sure bullet is "dead", just set lives to 0.
+	LDR v1, =PUMP_SPRITE
+	MOV a1, #0
+	STR a1, [v1, #LIVES]
+
+
+; Set current score to 0
+
+	MOV a1, #0
+	LDR v1, =CURRENT_SCORE
+	STR a1, [v1]
+
 ; Now update the GUI
 
 	BL draw_empty_board
@@ -288,6 +311,228 @@ reset_board_loop
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
+;---------------------reset model--------------------------------------;
+
+
+;;;;;;;;;;;;;;;;
+; UPDATE MODEL ;
+;;;;;;;;;;;;;;;;
+; Does the following
+; 1. Move the enemy sprites
+; 2. Move bullet, if there is one
+; 3. Move Dug
+; 4. Detect & Handle Collisions
+; 5. Trigger GUI Update
+; 6. Trigger Peripheral Update
+; NOTE: Order was not chosen arbitarily
+update_model
+	STMFD sp!, {lr, v1-v8}
+
+; 1. Move the enemy sprites
+; -- 1.1 Move FYGAR1
+	; Load FYGAR 1
+	LDR v1, =FYGAR_SPRITE_1
+	; Get current stats
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	LDR a3, [v1, #LIVES]
+	LDR a4, [v1, #DIRECTION]
+
+	; Check if LIVES != 0
+	CMP a3, #0
+	BEQ update_fygar
+
+	; Update X and Y based on Direction
+	
+	CMP a4, #DIR_UP		; Check if direction is UP
+	SUBEQ a2, a2, #1	; Then decrement y (a2)
+	BEQ update_fygar	; finish updating fygar
+	
+	CMP a4, #DIR_DOWN	; Check if dir is DOWN
+	ADDEQ a2, a2, #1	; Then increment y (a2)
+	BEQ update_fygar	; finish updating fygar
+
+	CMP a4, #DIR_LEFT	; check if dir == LEFT
+	SUBEQ a1, a1, #1	; then decrement x (a1)
+	BEQ update_fygar	; finish updating fygar
+
+	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
+	ADDEQ a1, a1, #1	; then increment x (a1)
+	BEQ update_fygar	; finish updating fygar
+
+update_fygar
+	BL update_sprite	; update fygar sprite
+
+; -- 1.2 Move POOKA1
+	; Load POOKA1
+	LDR v1, =POOKA_SPRITE_1
+	; Get current stats
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	LDR a3, [v1, #LIVES]
+	LDR a4, [v1, #DIRECTION]
+
+	; Check if LIVES != 0
+	CMP a3, #0
+	BEQ update_pooka1
+
+	; Update X and Y based on Direction
+	
+	CMP a4, #DIR_UP		; Check if direction is UP
+	SUBEQ a2, a2, #1	; Then decrement y (a2)
+	BEQ update_pooka1	; finish updating pooka1
+	
+	CMP a4, #DIR_DOWN	; Check if dir is DOWN
+	ADDEQ a2, a2, #1	; Then increment y (a2)
+	BEQ update_pooka1	; finish updating pooka1
+
+	CMP a4, #DIR_LEFT	; check if dir == LEFT
+	SUBEQ a1, a1, #1	; then decrement x (a1)
+	BEQ update_pooka1	; finish updating pooka1
+
+	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
+	ADDEQ a1, a1, #1	; then increment x (a1)
+	BEQ update_pooka1	; finish updating pooka1
+
+update_pooka1
+	BL update_sprite	; update pooka1 sprite
+
+; -- 1.3 Move POOKA2
+	; Load POOKA2
+	LDR v1, =POOKA_SPRITE_2
+	; Get current stats
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	LDR a3, [v1, #LIVES]
+	LDR a4, [v1, #DIRECTION]
+
+	; Check if LIVES != 0
+	CMP a3, #0
+	BEQ update_pooka2
+
+	; Update X and Y based on Direction
+	
+	CMP a4, #DIR_UP		; Check if direction is UP
+	SUBEQ a2, a2, #1	; Then decrement y (a2)
+	BEQ update_pooka2	; finish updating pooka2
+	
+	CMP a4, #DIR_DOWN	; Check if dir is DOWN
+	ADDEQ a2, a2, #1	; Then increment y (a2)
+	BEQ update_pooka2	; finish updating pooka2
+
+	CMP a4, #DIR_LEFT	; check if dir == LEFT
+	SUBEQ a1, a1, #1	; then decrement x (a1)
+	BEQ update_pooka2	; finish updating pooka2
+
+	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
+	ADDEQ a1, a1, #1	; then increment x (a1)
+	BEQ update_pooka2	; finish updating pooka2
+
+update_pooka2
+	BL update_sprite	; update pooka2 sprite
+
+; 2. Move bullet, if there exists one
+	; Load PUMP stats
+	LDR v1, =PUMP_SPRITE
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	LDR a3, [v1, #LIVES]
+	LDR a4, [v1, #DIRECTION]
+
+	; Check if LIVES != 0
+	CMP a3, #0
+	BEQ update_bullet	; if LIVES == 0, finish
+	; else, update position
+
+	CMP a4, #DIR_UP		; Check if direction is UP
+	SUBEQ a2, a2, #1	; Then decrement y (a2)
+	BEQ update_bullet	; finish updating bullet
+	
+	CMP a4, #DIR_DOWN	; Check if dir is DOWN
+	ADDEQ a2, a2, #1	; Then increment y (a2)
+	BEQ update_bullet	; finish updating bullet
+
+	CMP a4, #DIR_LEFT	; check if dir == LEFT
+	SUBEQ a1, a1, #1	; then decrement x (a1)
+	BEQ update_bullet	; finish updating bullet
+
+	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
+	ADDEQ a1, a1, #1	; then increment x (a1)
+	BEQ update_bullet	; finish updating bullet
+
+update_bullet
+	BL update_sprite
+
+
+; 3. Move Dug
+	; Load DUG stats
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	LDR a3, [v1, #LIVES]
+	LDR a4, [v1, #DIRECTION]
+
+; TODO: What if Dug dies
+
+	LDR v2, =UPDATE_DUG_P
+	LDRB ip, [v2]
+	CMP ip, #1	; check if update flag is raised
+	BNE update_dug	; if not, dont change anything
+
+	; else, load new direction and move
+	LDR v2, =DIR_TO_MOVE_DUG
+	LDR a4, [v2]	; change Dug's direction
+
+	CMP a4, #DIR_UP		; Check if direction is UP
+	SUBEQ a2, a2, #1	; Then decrement y (a2)
+	BEQ update_dug	; finish updating dug
+	
+	CMP a4, #DIR_DOWN	; Check if dir is DOWN
+	ADDEQ a2, a2, #1	; Then increment y (a2)
+	BEQ update_dug	; finish updating dug
+
+	CMP a4, #DIR_LEFT	; check if dir == LEFT
+	SUBEQ a1, a1, #1	; then decrement x (a1)
+	BEQ update_dug	; finish updating dug
+
+	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
+	ADDEQ a1, a1, #1	; then increment x (a1)
+	BEQ update_dug	; finish updating dug
+
+update_dug
+	BL update_sprite
+
+; TODO: Detect and handle collisions
+; TODO: Trigger GUI updates
+; TODO: Trigger peripheral updates
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
+
+;--------------------update model--------------------------------------;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; queue movement for DUG
+; Called from UART0 interrupt
+; Prevents Dug from moving 2 spaces if baud rate > timer rate
+; input:	a1 = DIRECTION
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+queue_movement_DUG
+	STMFD sp!, {lr, v1}
+
+	LDR v1, =UPDATE_DUG_P
+	LDRB ip, [v1]
+	CMP ip, #0		; Check if update flag is down (model has been updated)
+	BNE qm_dug_end		; if not, end
+	MOV ip, #1
+	STRB ip, [v1]		; Raise update flag
+
+	LDR v1, =DIR_TO_MOVE_DUG
+	STR a1, [v1]		; store direction to move dug
+
+qm_dug_end
+	LDMFD sp!, {lr, v1}
+	BX lr
 
 ; Update data for a sprite
 ; Inputs:
