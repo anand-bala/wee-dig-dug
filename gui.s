@@ -135,8 +135,39 @@ draw_empty_board
 populate_board
 	STMFD sp!, {lr, v1-v8}
 
-	
+; loop through game board model and populate board with sand
+	LDR v1, =SAND_GUI
+	LDRB a3, [v1]	; Load sand character on a3
+	MOV a1, #18	; a1 = max x coordinate
+	MOV a2, #14	; a1 = max y coordinate
 
+populate_loop_x
+populate_loop_y
+	STMFD sp!, {a1}		; save x coord
+	BL get_sand_at_xy
+	MOV ip, a1		; hold sand in ip
+	LDMFD sp!, {a1}		; save y coord
+
+	CMP ip, #1		; check if sand
+	BNE skip_populate	; skip populate if no sand
+
+	STMFD sp!, {a1-a3}
+	BL draw_char_at_xy
+	LDMFD sp!, {a1-a3}
+skip_populate
+	SUBS a2, a2, #1		; decrement y coordinate
+	MOVEQ a2, #14		; reset y to 14 for inner loop
+	BGT populate_loop_y	; if > 0, do inner loop
+	; end inner loop
+	SUBS a1, a1, #1		; decrement x coordinate
+	BGT populate_loop_x	; loop while x > 0
+	; end outer loop
+populate_end_loop
+
+
+; Now draw FYGAR and POOKAs
+
+populate_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
@@ -192,9 +223,41 @@ update_board
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
+; Draw character at xy
+; Draw any character on the GUI Board
+; input:
+;	a1 = x
+;	a2 = y
+;	a3 = character
+draw_char_at_xy
+	STMFD sp!, {lr, v1-v4}
+
+	ADD v2, a1, #GUI_X_ORIGIN	; v2 = x + GUI Offset
+	ADD v3, a2, #GUI_Y_ORIGIN	; v3 = y + GUI Offset
+	MOV v4, a			; v4 = character
+
+	; Convert x
+	MOV a1, v2
+	MOV a2, #3
+	LDR v1, =ESC_cursor_pos_col
+	BL num_to_dec_str
+
+	; Convert y
+	MOV a1, v3
+	MOV a2, #3
+	LDR v1, =ESC_cursor_pos_line
+	BL num_to_dec_str
+
+	; print character
+	MOV a1, v4
+	BL output_character
+
+	LDMFD sp!, {lr, v1-v4}
+	BX lr
+
 
 ; Draw a sprite
-; This routine draws a sprite based on the internal 
+; This routine draws a sprite based on it's data
 ; input:
 ;	v1 = Address to Sprite structure
 ;	a1 = Character to represent sprite

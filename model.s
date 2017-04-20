@@ -33,24 +33,24 @@
 ;	CONSTANTS		;
 ;;;;;;;;;;;;;;;;;;;;;
 
-BOARD_WIDTH		EQU	19
+BOARD_WIDTH	EQU 19
 BOARD_HEIGHT	EQU 15
-BOARD_SIZE		EQU	19*15
+BOARD_SIZE	EQU 19*15
 BOARD_CENTER_X	EQU 9
 BOARD_CENTER_Y	EQU 7
 
 
-X_POS		EQU	0*4
-Y_POS		EQU	1*4
-LIVES		EQU	2*4
+X_POS		EQU 0*4
+Y_POS		EQU 1*4
+LIVES		EQU 2*4
 DIRECTION	EQU 3*4
 OLD_X_POS	EQU 4*4
-OLD_Y_POS	EQU	5*4
+OLD_Y_POS	EQU 5*4
 
-DIR_UP		EQU	0
-DIR_DOWN	EQU	1
-DIR_LEFT	EQU	2
-DIR_RIGHT	EQU	3
+DIR_UP		EQU 0
+DIR_DOWN	EQU 1
+DIR_LEFT	EQU 2
+DIR_RIGHT	EQU 3
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	GAME STATE		;
@@ -99,9 +99,11 @@ PUMP_SPRITE		; State of the Pump sprite
 
 HIGH_SCORE	DCD 0
 LEVEL		DCD 1
+CURRENT_SCORE	DCD 0
 
-GAME_BOARD	FILL BOARD_SIZE, 0x01, 1	; Define a 2560 byte array with 1 byte 1s signifying sand
+GAME_BOARD	FILL BOARD_SIZE, 0x00, 1	; Define a 2560 byte array with 1 byte 1s signifying sand
 	ALIGN
+BEGIN_GAME	= 0,0	; Boolean to start game
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -113,9 +115,11 @@ reset_model
 	STMFD sp!, {lr, v1-v8}
 
 	; Reset the board to initial state
-	LDR v1, =GAME_BOARD
-	LDR v2, =BOARD_SIZE
-	MOV ip, #1
+	LDR v1, =GAME_BOARD	; load Game Board address
+	ADD v1, v1, #38		; Dont fill first two rows
+	LDR v2, =BOARD_SIZE	; Load board size into v2
+	SUB v2, v2, #38		; dont count first two rows
+	MOV ip, #1		; ip = sand
 
 	; Loop to reinitialize the board.
 	; Fill board with sand
@@ -149,16 +153,19 @@ reset_board_loop
 	; Set random dir
 	MOV a1, #2			; get random 4bit number for direction [0-3]
 	BL get_nbit_rand
-	MOV a4, a1			; move returned random number to a4
-	
+	STR a1, [v1, #DIRECTION]	; update direction
+
 	; Set Number of lives = 1
-	MOV a3, #1
-	
+	MOV a1, #1
+	STR a1, [v1, #LIVES]		; update lives
+
 	; set random Y in range [0-14]	 (4 bit)
 	MOV a1, #4
 	BL get_nbit_rand
 	CMP a1, #15
 	MOVGE a1, #14
+	STR a1, [v1, #Y_POS]		; update Y pos
+	STR a1, [v1, #OLD_Y_POS]	; update old Y pos
 	MOV a2, a1
 	
 	; set random X in range [0-18]	(5 bit with check)
@@ -166,11 +173,9 @@ reset_board_loop
 	BL get_nbit_rand
 	CMP a1, #19
 	MOVGE a1, #18
+	STR a1, [v1, #X_POS]		; update X pos
+	STR a1, [v1, #OLD_X_POS]	; update X pos
 		
-	; update sprite
-	STMFD sp!, {a1, a2}	; save and restore x and y position
-	BL update_sprite
-	LDMFD sp!, {a1, a2}
 	; Clear sand for Fygar1 movement  (x-1,y) (x,y) (x+1,y)
 
 	; clear_at_x_y changes a1 and a2. Hence, saving x and y in v2, v3
@@ -193,16 +198,19 @@ reset_board_loop
 	; Set random dir
 	MOV a1, #2			; get random 4bit number for direction [0-3]
 	BL get_nbit_rand
-	MOV a4, a1			; move returned random number to a4
-	
+	STR a1, [v1, #DIRECTION]	; update direction
+
 	; Set Number of lives = 1
-	MOV a3, #1
-	
+	MOV a1, #1
+	STR a1, [v1, #LIVES]		; update lives
+
 	; set random Y in range [0-14]	 (4 bit)
 	MOV a1, #4
 	BL get_nbit_rand
 	CMP a1, #15
 	MOVGE a1, #14
+	STR a1, [v1, #Y_POS]		; update Y pos
+	STR a1, [v1, #OLD_Y_POS]	; update old Y pos
 	MOV a2, a1
 	
 	; set random X in range [0-18]	(5 bit with check)
@@ -210,11 +218,8 @@ reset_board_loop
 	BL get_nbit_rand
 	CMP a1, #19
 	MOVGE a1, #18
-		
-	; update sprite
-	STMFD sp!, {a1, a2}	; save and restore x and y position
-	BL update_sprite
-	LDMFD sp!, {a1, a2}
+	STR a1, [v1, #X_POS]		; update X pos
+	STR a1, [v1, #OLD_X_POS]	; update X pos
 	; Clear sand for Pooka1 movement  (x-1,y) (x,y) (x+1,y)
 
 	; clear_at_x_y changes a1 and a2. Hence, saving x and y in v2, v3
@@ -237,16 +242,19 @@ reset_board_loop
 	; Set random dir
 	MOV a1, #2			; get random 4bit number for direction [0-3]
 	BL get_nbit_rand
-	MOV a4, a1			; move returned random number to a4
-	
+	STR a1, [v1, #DIRECTION]	; update direction
+
 	; Set Number of lives = 1
-	MOV a3, #1
-	
+	MOV a1, #1
+	STR a1, [v1, #LIVES]		; update lives
+
 	; set random Y in range [0-14]	 (4 bit)
 	MOV a1, #4
 	BL get_nbit_rand
 	CMP a1, #15
 	MOVGE a1, #14
+	STR a1, [v1, #Y_POS]		; update Y pos
+	STR a1, [v1, #OLD_Y_POS]	; update old Y pos
 	MOV a2, a1
 	
 	; set random X in range [0-18]	(5 bit with check)
@@ -254,11 +262,8 @@ reset_board_loop
 	BL get_nbit_rand
 	CMP a1, #19
 	MOVGE a1, #18
-		
-	; update sprite
-	STMFD sp!, {a1, a2}	; save and restore x and y position
-	BL update_sprite
-	LDMFD sp!, {a1, a2}
+	STR a1, [v1, #X_POS]		; update X pos
+	STR a1, [v1, #OLD_X_POS]	; update X pos
 	; Clear sand for Pooka2 movement  (x-1,y) (x,y) (x+1,y)
 
 	; clear_at_x_y changes a1 and a2. Hence, saving x and y in v2, v3
