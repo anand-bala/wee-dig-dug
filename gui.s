@@ -43,6 +43,12 @@
 ;	GUI ELEMENTS	;
 ;;;;;;;;;;;;;;;;;;;;;
 
+PUMP_GUI
+	DCB	"|"	; UP
+	DCB	"|"	; DOWN
+	DCB	"-"	; LEFT
+	DCB	"-"	; RIGHT
+
 DUG_GUI
 	DCB	"^"	; Face UP
 	DCB	"v"	; Face DOWN

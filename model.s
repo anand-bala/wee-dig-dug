@@ -21,6 +21,7 @@
 	EXPORT	FYGAR_SPRITE_1
 	EXPORT	POOKA_SPRITE_1
 	EXPORT	POOKA_SPRITE_2
+	EXPORT	PUMP_SPRITE
 
 	EXPORT	update_sprite
 	EXPORT	clear_at_x_y
@@ -55,42 +56,51 @@ DIR_RIGHT	EQU	3
 ;	GAME STATE		;
 ;;;;;;;;;;;;;;;;;;;;;
 
-DUG_SPRITE			; State of the Dug sprite
-	DCD	10			; x position
-	DCD	7			; y position
-	DCD	4			; lives
-	DCD	DIR_LEFT   	; direction
-	DCD	32			; Old X
+DUG_SPRITE		; State of the Dug sprite
+	DCD 10			; x position
+	DCD 7			; y position
+	DCD 4			; lives
+	DCD DIR_LEFT	   	; direction
+	DCD 32			; Old X
 	DCD 20			; Old Y
 
 FYGAR_SPRITE_1		; State of 1st Fygar sprite
 	DCD 1			; x position
 	DCD 1			; y position
 	DCD 1			; lives
-	DCD	DIR_RIGHT	; direction
-	DCD	1			; Old X
+	DCD DIR_RIGHT		; direction
+	DCD 1			; Old X
 	DCD 1			; Old Y
 
 POOKA_SPRITE_1		; State of 1st Pooka sprite
 	DCD 10			; x position
 	DCD 1			; y position
 	DCD 1			; lives
-	DCD	DIR_UP		; direction
-	DCD	10			; Old X
+	DCD DIR_UP		; direction
+	DCD 10			; Old X
 	DCD 1			; Old Y
 
 POOKA_SPRITE_2		; State of 2nd Pooka sprite
 	DCD 15			; x position
 	DCD 15			; y position
 	DCD 1			; lives
-	DCD	DIR_DOWN	; direction
-	DCD	15			; Old X
+	DCD DIR_DOWN		; direction
+	DCD 15			; Old X
 	DCD 15			; Old Y
 
-HIGH_SCORE	DCD	0
+PUMP_SPRITE		; State of the Pump sprite
+	DCD 9			; x position
+	DCD 7			; y position
+	DCD 4			; lives
+	DCD DIR_LEFT	   	; direction
+	DCD 8			; Old X
+	DCD 7			; Old Y
+
+
+HIGH_SCORE	DCD 0
 LEVEL		DCD 1
 
-GAME_BOARD	FILL	BOARD_SIZE, 0x01, 1	; Define a 2560 byte array with 1 byte 1s signifying sand
+GAME_BOARD	FILL BOARD_SIZE, 0x01, 1	; Define a 2560 byte array with 1 byte 1s signifying sand
 	ALIGN
 
 
@@ -343,7 +353,49 @@ clear_at_x_y  ; coordinate on array = x + (width*y)
 	MOV a1, #0		; use a1 to hold 0 = no sand
 	STRB a1, [v1, ip]	; store 0 at x+(width*y)
 cxy_end
-   	LDMFD	sp!, {lr, v1}
+	LDMFD	sp!, {lr, v1}
+	BX lr
+
+
+; Check if sand is present at xy
+; Input:
+;	a1 = x
+;	a2 = y
+; Output
+;	a1 = 0 or 1 (true or false)
+get_sand_at_xy
+	STMFD sp!, {lr, v1-v8}
+
+	; If out of bounds, return 0
+
+	CMP a1, #0	; check
+	MOVLT a1, #0
+	BLT get_xy_end	; end if x < 0
+	CMP a1, #18 ; check
+	MOVGT a1, #0
+	BGT get_xy_end	; end if x > 18
+
+	CMP a2, #0	; check
+	MOVLT a1, #0
+	BLT get_xy_end	; end if y < 0
+	CMP a2, #14 ; check
+	MOVGT a1, #0
+	BGT get_xy_end	; end if y > 14
+
+	LDR v1, =GAME_BOARD
+
+	; Offset into board = x + (y * width)
+
+	; Multiply y by width = 19
+	; y = y*16 + y*2 + y
+	ADD ip, a2, a2, LSL #1	; ip = y + 2*y
+	ADD a2, ip, a2, LSL #4	; y = 16*y + ip
+	
+	; coordinate on array = x + y (y is new y)
+	ADD ip, a1, a2 	; use ip as offset into gameboard array
+	LDRB a1, [v1, ip]	; store 0 at x+(width*y)
+get_xy_end	
+	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
 	END
