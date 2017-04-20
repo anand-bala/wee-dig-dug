@@ -1,6 +1,24 @@
-# Proposed Design
+# Wee Dig Dug: Design
 
-## model.s
+## Overview
+
+The game is designed similar to a **Model-View-Controller (MVC)** framework. This architecture is a common way of designing applications with a User Interface.
+A **MVC** framework works in the following way:
+
+* Each component is responsible for a particular task, and only that component is allowed to perform that task.
+* The **Model** is the internal representation of the application, and it is responsible to maintain the state of the application at any time.
+* The **View** is the GUI. It works by reading the **Model** and displaying the graphical representation of the model on the screen.
+* The **Controller** is the component that is responsible for listening to user input and updating the model accordingly.
+* **MVC** components interact with each other the following way:
+
+`TODO: Insert MVC image`
+
+In _WeeDigDug_, the **MVC** framework is modified to make it easier to develop the game.
+The main difference is in the **MVC** loop, where instead of the **View** being updaed by the **Model**,
+the **Controller** triggers a change in both of these sequentially, and the **View** reads the **Model**
+and renders the GUI.
+
+## Model (model.s)
 
 Maintains the internal representation of the whole game.
 

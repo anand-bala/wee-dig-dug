@@ -59,7 +59,7 @@ SAND_GUI
 	DCB	"#"
 
 BOARD_GUI
-	DCB	"ZZZZZZZZZZZZZZZZZZZZZ",13,10
+	DCB "ZZZZZZZZZZZZZZZZZZZZZ",13,10
 	DCB "Z                   Z",13,10
 	DCB "Z                   Z",13,10
 	DCB "Z                   Z",13,10
@@ -75,7 +75,7 @@ BOARD_GUI
 	DCB "Z                   Z",13,10
 	DCB "Z                   Z",13,10
 	DCB "Z                   Z",13,10
-	DCB	"ZZZZZZZZZZZZZZZZZZZZZ",13,10,0
+	DCB "ZZZZZZZZZZZZZZZZZZZZZ",13,10,0
 
 HIGH_SCORE_str	=	"HIGH SCORE: "
 HIGH_SCORE_val	=	"000000",10,13,0
@@ -120,12 +120,19 @@ draw_empty_board
 	BL output_string
 	LDR v1, =CURRENT_SCORE_str
 	BL output_string
-   	LDR v1, =HIGH_SCORE_str
+	LDR v1, =HIGH_SCORE_str
 	BL output_string
 
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
+
+populate_board
+	STMFD sp!, {lr, v1-v8}
+
 	
+
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
 
 update_board
 	STMFD sp!, {lr, v1-v8}
@@ -177,6 +184,61 @@ update_board
 	BL output_character
 
 	LDMFD sp!, {lr, v1-v8}
+	BX lr
+
+
+; Draw a sprite
+; This routine draws a sprite based on the internal 
+; input:
+;	v1 = Address to Sprite structure
+;	a1 = Character to represent sprite
+draw_sprite
+	STMFD sp!, {lr, v1, v8}
+	
+	MOV ip, a1		; store character in ip
+	MOV v8, v1		; store sprite address in v8
+
+	; Load Old X position and clear at position
+	LDR a1, [v8, #OLD_X_POS]
+	ADD a1, a1, #GUI_X_ORIGIN
+	MOV a2, #3			; 3 char wide string
+	LDR v1, =ESC_cursor_pos_col
+	BL num_to_dec_str
+
+	; Load Old Y position and clear at position
+	LDR a1, [v8, #OLD_Y_POS]
+	ADD a1, a1, #GUI_Y_ORIGIN
+	MOV a2, #3			; 3 char wide string
+	LDR v1, =ESC_cursor_pos_line
+	BL num_to_dec_str
+
+	LDR v1, =ESC_cursor_position
+	BL output_string
+	
+	MOV a1, #' '
+	BL output_character
+	
+	; Load X position and draw at position
+	LDR a1, [v8, #X_POS]
+	ADD a1, a1, #GUI_X_ORIGIN
+	MOV a2, #3			; 3 char wide string
+	LDR v1, =ESC_cursor_pos_col
+	BL num_to_dec_str
+
+	; Load Y position and draw at position
+	LDR a1, [v8, #Y_POS]
+	ADD a1, a1, #GUI_Y_ORIGIN
+	MOV a2, #3			; 3 char wide string
+	LDR v1, =ESC_cursor_pos_line
+	BL num_to_dec_str
+
+	LDR v1, =ESC_cursor_position
+	BL output_string
+	
+	MOV a1, ip		; Move character back to a1
+	BL output_character
+
+	LDMFD sp!, {lr, v1, v8}
 	BX lr
 
 	END
