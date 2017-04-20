@@ -36,7 +36,11 @@
 
 	; GUI routines (EXPORT)
 	EXPORT	update_board
-	EXPORT	draw_empty_board	
+	EXPORT	draw_empty_board
+	EXPORT	populate_board
+	
+	; Model routines
+	IMPORT	get_sand_at_xy	
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -145,10 +149,10 @@ populate_board
 
 populate_loop_x
 populate_loop_y
-	STMFD sp!, {a1}		; save x coord
+	STMFD sp!, {a1, a2}		; save x coord
 	BL get_sand_at_xy
 	MOV ip, a1		; hold sand in ip
-	LDMFD sp!, {a1}		; save y coord
+	LDMFD sp!, {a1, a2}		; save y coord
 
 	CMP ip, #1		; check if sand
 	BNE skip_populate	; skip populate if no sand
@@ -162,7 +166,7 @@ skip_populate
 	BGT populate_loop_y	; if > 0, do inner loop
 	; end inner loop
 	SUBS a1, a1, #1		; decrement x coordinate
-	BGT populate_loop_x	; loop while x > 0
+	BGE populate_loop_x	; loop while x > 0
 	; end outer loop
 populate_end_loop
 
@@ -185,9 +189,10 @@ populate_end_loop
 	BL draw_sprite		; draw POOKA2
 
 ; Now draw DUG
-	LDR v1, =DUG_GUI
-	LDRB a1, [v1]		; Load DUG GUI Character
+
 	LDR v1, =DUG_SPRITE	; Load DUG Sprite
+	LDR v2, =DUG_GUI
+	LDRB a1, [v2]		; Load DUG GUI Character
 	BL draw_sprite		; draw DUG
 
 populate_end
@@ -257,7 +262,7 @@ draw_char_at_xy
 
 	ADD v2, a1, #GUI_X_ORIGIN	; v2 = x + GUI Offset
 	ADD v3, a2, #GUI_Y_ORIGIN	; v3 = y + GUI Offset
-	MOV v4, a			; v4 = character
+	MOV v4, a3			; v4 = character
 
 	; Convert x
 	MOV a1, v2
@@ -270,6 +275,9 @@ draw_char_at_xy
 	MOV a2, #3
 	LDR v1, =ESC_cursor_pos_line
 	BL num_to_dec_str
+
+	LDR v1, =ESC_cursor_position
+	BL output_string
 
 	; print character
 	MOV a1, v4

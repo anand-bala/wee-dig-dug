@@ -26,8 +26,15 @@
 	EXPORT	update_sprite
 	EXPORT	clear_at_x_y
 	EXPORT	reset_model
+	EXPORT	get_sand_at_xy
+	EXPORT	update_model
+	EXPORT	queue_movement_DUG
+
 
 	IMPORT	get_nbit_rand
+
+	IMPORT	draw_empty_board
+	IMPORT	populate_board
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	CONSTANTS		;
@@ -650,6 +657,180 @@ get_sand_at_xy
 	ADD ip, a1, a2 	; use ip as offset into gameboard array
 	LDRB a1, [v1, ip]	; store 0 at x+(width*y)
 get_xy_end	
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
+
+; Detect collision of sprite with
+; 0 -> nothing
+; 1 -> Sand
+; 2 -> Wall
+; 3 -> Fatal Collision
+; input
+;	v1 = address to sprite
+;	a1 = Type of sprite
+;		0 = DUG
+;		1 = POOKA
+;		2 = FYGAR
+;		3 = PUMP/BULLET
+; output
+;	a1 = output
+detect_sprite_collision
+	; TODO: Just update the actual GUI
+	STMFD sp!, {lr, v1-v8}
+	; v8 = addresses
+
+	; a2 = X POS
+	; a3 = Y POS
+
+	LDR a2, [v1, #X_POS]
+	LDR a3, [v1, #Y_POS]
+
+	CMP a1, #3
+	BEQ is_pump_check
+	CMP a1, #2
+	BEQ is_fygar_check
+	CMP a1, #1
+	BEQ is_pooka_check
+	CMP a1, #0
+	BEQ is_dug_check
+
+	BAL collision_end
+
+is_dug_check
+; Sprite is Dug.
+; 1. Check for fatal collision (with fygar or pooka)
+	LDR v8, =FYGAR_SPRITE_1		; Load FYGAR
+	; Check if X Positions are equal
+	LDR ip, [v8, #X_POS]		; Load its X POSITION
+	CMP ip, a2			; Compare the X positions
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
+	BEQ collision_end
+
+	; Check if Y Positions are equal
+	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
+	CMP ip, a3			; Compare the Y positions
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
+	BEQ collision_end
+
+	LDR v8, =POOKA_SPRITE_1		; Load POOKA
+	; Check if X Positions are equal
+	LDR ip, [v8, #X_POS]		; Load its X POSITION
+	CMP ip, a2			; Compare the X positions
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
+	BEQ collision_end
+
+	; Check if Y Positions are equal
+	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
+	CMP ip, a3			; Compare the Y positions
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
+	BEQ collision_end
+
+	LDR v8, =POOKA_SPRITE_2		; Load POOKA1
+	; Check if X Positions are equal
+	LDR ip, [v8, #X_POS]		; Load its X POSITION
+	CMP ip, a2			; Compare the X positions
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
+	BEQ collision_end
+
+	; Check if Y Positions are equal
+	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
+	CMP ip, a3			; Compare the Y positions
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
+	BEQ collision_end
+
+; 2. check for wall collision
+	CMP a2, #0	; check
+	MOVLT a1, #2
+	BLT collision_end	; end if x < 0
+	CMP a2, #18 ; check
+	MOVGT a1, #2
+	BGT collision_end	; end if x > 18
+
+	CMP a3, #0	; check
+	MOVLT a1, #2
+	BLT collision_end	; end if y < 0
+	CMP a3, #14 ; check
+	MOVGT a1, #2
+	BGT collision_end	; end if y > 14
+
+; 3. check for sand collision
+; Check for sand on board model at xy, and if collision, increment score
+	MOV a1, a2			; Move x into a1
+	MOV a2, a3			; Move y into a2
+	BL get_sand_at_xy		; Get sand at current position
+	; 1 if sand, 0 if nothing
+	; so just return
+	BAL collision_end
+
+is_pooka_check
+is_fygar_check
+; Sprite is either Pooka or Fygar. Treat them same. #EQUALITY
+; 1. Check for fatal collisions with pump
+	LDR v8, =PUMP_SPRITE
+	; Check if X Positions are equal
+	LDR ip, [v8, #X_POS]		; Load its X POSITION
+	CMP ip, a2			; Compare the X positions
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
+	BEQ collision_end
+
+	; Check if Y Positions are equal
+	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
+	CMP ip, a3			; Compare the Y positions
+	MOVEQ a1, #3			; set return value to 3 (FATAL)
+	BEQ collision_end
+
+; 2. Check for wall collision
+	CMP a2, #0	; check
+	MOVLT a1, #2
+	BLT collision_end	; end if x < 0
+	CMP a2, #18 ; check
+	MOVGT a1, #2
+	BGT collision_end	; end if x > 18
+
+	CMP a3, #0	; check
+	MOVLT a1, #2
+	BLT collision_end	; end if y < 0
+	CMP a3, #14 ; check
+	MOVGT a1, #2
+	BGT collision_end	; end if y > 14
+
+; 3. check for sand collision
+; Check for sand on board model at xy, and if collision, increment score
+	MOV a1, a2			; Move x into a1
+	MOV a2, a3			; Move y into a2
+	BL get_sand_at_xy		; Get sand at current position
+	; 1 if sand, 0 if nothing
+	; so just return
+	BAL collision_end
+
+is_pump_check
+; Sprite is pump. Only significant collision is with wall or sand
+; 1. Check for fatal collisions
+; 2. Check for wall collision
+	CMP a2, #0	; check
+	MOVLT a1, #2
+	BLT collision_end	; end if x < 0
+	CMP a2, #18 ; check
+	MOVGT a1, #2
+	BGT collision_end	; end if x > 18
+
+	CMP a3, #0	; check
+	MOVLT a1, #2
+	BLT collision_end	; end if y < 0
+	CMP a3, #14 ; check
+	MOVGT a1, #2
+	BGT collision_end	; end if y > 14
+
+; 3. check for sand collision
+	MOV a1, a2			; Move x into a1
+	MOV a2, a3			; Move y into a2
+	BL get_sand_at_xy		; Get sand at current position
+	; 1 if sand, 0 if nothing
+	; so just return
+	BAL collision_end
+
+
+collision_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 

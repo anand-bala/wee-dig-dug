@@ -31,3 +31,8 @@ Pending Work
 # GUI
 
 
+# Hardware
+
+* Change pin_connect_block to not initialize any Button except the EINT1 button
+
+
