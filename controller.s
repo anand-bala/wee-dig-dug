@@ -45,9 +45,10 @@
 	IMPORT	DIR_LEFT
 	IMPORT	DIR_RIGHT
 
-HALF_SEC	DCD	0x08CA000
-TIMER_100ms	DCD	0x1C2000
+HALF_SEC	EQU	0x08CA000
+TIMER_100ms	EQU	0x1C2000
 
+RUN_P		=	0,0
 EXIT_P		=	0,0
 UPDATE_P	=	0,0
 	ALIGN
@@ -57,17 +58,20 @@ weedigdug
 	BL pin_connect_block_setup
 	BL uart_init
 	BL interrupt_init
-	
-	MOV r0, #12
+
+	MOV a1, #12
 	BL output_character
 
-	BL reset_model
-	BL draw_empty_board
+; Begin GAME
 	LDR v1, =EXIT_P
+	LDR v2, =RUN_P
+game_begin
+	BL read_character 
 
-	LDR v1, =TIMER_100ms
-	LDR r0, [v1]
+	BL reset_model
+	LDR a1, =TIMER_100ms
 	BL timer_init
+
 game_loop
 	LDRB a1, [v1]	; load exit_p
 	CMP a1, #0

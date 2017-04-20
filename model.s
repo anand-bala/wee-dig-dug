@@ -280,6 +280,11 @@ reset_board_loop
 	MOV	a2, v3	   	; y
 	BL clear_at_x_y
 
+; Now update the GUI
+
+	BL draw_empty_board
+	BL populate_board
+
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 

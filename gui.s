@@ -118,6 +118,8 @@ ESC_show_cursor		= 27,"[?25h",0
 
 draw_empty_board
 	STMFD sp!, {lr, v1-v8}
+	MOV r0, #12
+	BL output_character
 	LDR v1, =ESC_hide_cursor
 	BL output_string
 	LDR v1, =ESC_cursor_origin
@@ -166,6 +168,27 @@ populate_end_loop
 
 
 ; Now draw FYGAR and POOKAs
+	; Drawing FYGAR
+	LDR v1, =FYGAR_GUI
+	LDRB a1, [v1]		; Load FYGAR GUI Character
+	LDR v1, =FYGAR_SPRITE_1	; Load Fygar data
+	BL draw_sprite		; draw FYGAR
+
+	LDR v1, =POOKA_GUI
+	LDRB a1, [v1]		; load Pooka GUI
+	LDR v1, =POOKA_SPRITE_1	; Load POOKA1 data
+	BL draw_sprite		; draw POOKA1
+
+	LDR v1, =POOKA_GUI
+	LDRB a1, [v1]		; load Pooka GUI
+	LDR v1, =POOKA_SPRITE_2	; Load POOKA2 data
+	BL draw_sprite		; draw POOKA2
+
+; Now draw DUG
+	LDR v1, =DUG_GUI
+	LDRB a1, [v1]		; Load DUG GUI Character
+	LDR v1, =DUG_SPRITE	; Load DUG Sprite
+	BL draw_sprite		; draw DUG
 
 populate_end
 	LDMFD sp!, {lr, v1-v8}
