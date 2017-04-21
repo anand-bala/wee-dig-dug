@@ -43,7 +43,7 @@
 	EXPORT	toggle_pause_game
 	EXPORT	init_model
 
-
+	IMPORT Game_over_gui
 	IMPORT	get_nbit_rand
 
 	IMPORT	draw_empty_board
@@ -381,6 +381,7 @@ reset_board_loop
 ;
 ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 model_game_over
 	STMFD sp!, {lr, v1-v8}
 
@@ -392,12 +393,12 @@ model_game_over
 	MOV ip, #1
 	STRB ip, [v1]
 
+	BL Game_over_gui
 	; TODO: GUI Update
 	; TODO: Peripheral Update
 
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
-
 
 
 ;---------------------reset model--------------------------------------;

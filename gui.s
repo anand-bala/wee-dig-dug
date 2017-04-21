@@ -1,5 +1,7 @@
 	AREA GUI, CODE, READWRITE
 	
+   	IMPORT GAME_END_GUI
+	EXPORT Game_over_gui
 	; Information about board	
 	IMPORT	BOARD_WIDTH
 	IMPORT	BOARD_HEIGHT
@@ -377,5 +379,13 @@ clear_sprite
 	LDMFD sp!, {lr, v1}
 	BX lr
 
+Game_over_gui
+	STMFD sp!, {lr, v1,a1}
+	MOV a1, #12
+	BL output_character
+	LDR v1, =GAME_END_GUI
+	BL output_string
+	LDMFD sp!, {lr, v1,a1}
+	BX lr
 
 	END

@@ -69,6 +69,8 @@
 	IMPORT	DIR_LEFT
 	IMPORT	DIR_RIGHT
 
+	IMPORT GAME_BEGIN_GUI
+
 	EXPORT	RUN_P
 
 HALF_SEC	EQU	0x08CA000
@@ -87,12 +89,16 @@ weedigdug
 	BL uart_init
 
 ; Begin GAME
-game_begin
+Game_begin_gui
 	MOV a1, #12
 	BL output_character
-	LDR v1, =begin_str
+	LDR v1, =GAME_BEGIN_GUI
 	BL output_string
 	BL read_character
+  ;the following 3 lines are redundant
+;	LDR v1, =begin_str
+;	BL output_string
+;	BL read_character
 
    	BL interrupt_init
 	BL timer_init
