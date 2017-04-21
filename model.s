@@ -12,7 +12,7 @@
 	EXPORT	DIR_DOWN
 	EXPORT	DIR_LEFT
 	EXPORT	DIR_RIGHT
-	
+	IMPORT update_peripherals
 	EXPORT	GAME_BOARD
 	EXPORT	HIGH_SCORE
 	EXPORT	LEVEL
@@ -697,6 +697,7 @@ end_model_update
 ; Trigger GUI updates
 	BL update_board
 ; TODO: Trigger peripheral updates
+	BL update_peripherals
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 

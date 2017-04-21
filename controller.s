@@ -70,6 +70,8 @@
 	IMPORT	DIR_RIGHT
 
 	IMPORT GAME_BEGIN_GUI
+	
+	IMPORT set_level_disp
 
 	EXPORT	RUN_P
 
@@ -89,7 +91,7 @@ weedigdug
 	BL uart_init
 
 ; Begin GAME
-Game_begin_gui
+Game_begin_gui_start
 	MOV a1, #12
 	BL output_character
 	LDR v1, =GAME_BEGIN_GUI
@@ -97,6 +99,10 @@ Game_begin_gui
 	
 	BL timer_init
 	BL read_character
+Game_begin_gui_end
+
+
+	
   ;the following 3 lines are redundant
 ;	LDR v1, =begin_str
 ;	BL output_string
