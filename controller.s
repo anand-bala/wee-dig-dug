@@ -94,6 +94,8 @@ Game_begin_gui
 	BL output_character
 	LDR v1, =GAME_BEGIN_GUI
 	BL output_string
+	
+	BL timer_init
 	BL read_character
   ;the following 3 lines are redundant
 ;	LDR v1, =begin_str
@@ -101,7 +103,6 @@ Game_begin_gui
 ;	BL read_character
 
    	BL interrupt_init
-	BL timer_init
 	BL init_model
 
 	; Set MR1 to half sec and reset it
@@ -124,8 +125,6 @@ game_loop
 	BEQ game_loop	; if exit_p = 0: loop
 	LDMFD sp!, {lr}
 	BX lr
-
-
 
 FIQ_Handler
 		STMFD SP!, {r0-r12, lr}  	; Save registers r0-r12, lr
