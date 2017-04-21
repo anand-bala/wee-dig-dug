@@ -5,6 +5,12 @@
 	EXPORT	interrupt_init
 	EXPORT	interrupt_disable
 	EXPORT	read_timer0
+	EXPORT	set_match0
+	EXPORT	set_match1
+	EXPORT	set_match2
+	EXPORT	set_match3
+	EXPORT	reset_timer0
+
 
 	EXPORT	clear_7_seg
 	EXPORT	initial_7_seg
@@ -64,7 +70,10 @@ IOPIN			EQU 0x00;
 TIMER0	EQU	0xE0004000
 T_IR	EQU	0x00
 T_MCR	EQU	0x14
+T_MR0	EQU 0x18
 T_MR1	EQU	0x1C
+T_MR2	EQU 0x20
+T_MR3	EQU 0x24
 T_TCR	EQU	0x04
 T_TC	EQU	0x08
 
@@ -228,7 +237,8 @@ pin_connect_block_setup
 	
 	LDR r0, =IO_1_DIR
 	LDR r1, [r0]
-	AND r1, r1, #IO1DIR_BTN 	; ANDing and setting 23:20 to 0
+; the following line is commented beceause we dont want to use our buttons alltogether
+;	AND r1, r1, #IO1DIR_BTN 	; ANDing and setting 23:20 to 0
 	ORR r1, r1, #IO1DIR_LED		; ORing and setting 19:16 to 1	
 	STR r1, [r0]
 	
@@ -243,6 +253,8 @@ uart_init
 	MOV r4, #131			; Byte to enable divisor latch access
 	STRB r4, [r3, #0x0C]		; Enable divisor latch access
 	MOV r4, #U0DL_LOWER			; Lower Latch Baud Rate
+	; make it FAAAASSSSSTTTT
+	;LSL r4, r4, #8
 	STRB r4, [r3]			; Set lower divisor latch for 115200 baud
 	MOV r4, #U0DL_UPPER			; Upper latch  Baud Rate
 	STRB r4, [r3, #0x04]		; Set upper divisor latch for 115200 baud
@@ -257,11 +269,101 @@ timer_init
 	STMFD SP!,{lr, r3, r4}	; Store register lr on stack
 	
 	LDR r3, =TIMER0		; Load TIMER0 Base address
-	STR r0, [r3, #T_MR1]		; set MR1
 	MOV r4, #1				; Enable timer
 	STR r4, [r3, #T_TCR]		;
 
 	LDMFD sp!, {lr, r3, r4}
+	BX lr
+
+reset_timer0
+	STMFD SP!,{lr}	; Store register lr on stack
+	
+	LDR a1, =TIMER0		; Load TIMER0 Base address
+	MOV a2, #0x2
+	STR a2, [a1, #T_TCR]		;
+	MOV a2, #0x1
+	STR a2, [a1, #T_TCR]		;
+	LDMFD sp!, {lr}
+	BX lr
+
+; Set match register 0
+; input:	a1	=	Timer match value
+;			a2	=	Reset
+set_match0
+	STMFD SP!,{lr, v1}	; Store register lr on stack
+	
+	LDR v1, =TIMER0		; Load TIMER0 Base address
+	STR a1, [v1, #T_MR0]	; set MR0
+	
+	; Get correct bit for MCR (bit x*3)
+	; I R S
+	; 0 1 2
+	MOV a1, #0
+	ORR a1, a1, #1			; Set Bit 0 = 1 for interrupt
+	ORR a1, a1, a2, LSL #1	; Set bit 1 = x for reset
+	STR a1, [v1, #T_MCR]
+
+	LDMFD sp!, {lr, v1}
+	BX lr
+
+; Set match register 1
+; input:	a1	=	Timer match value
+;			a2	=	Reset
+set_match1
+	STMFD SP!,{lr, v1}	; Store register lr on stack
+	
+	LDR v1, =TIMER0		; Load TIMER0 Base address
+	STR a1, [v1, #T_MR1]	; set MR0
+	
+	; Get correct bit for MCR (bit x*3)
+	; I R S
+	; 0 1 2
+	MOV a1, #1
+	LSL a1, a1, #3			; Set Bit 3 = 1 for interrupt
+	ORR a1, a1, a2, LSL #4	; Set bit 4 = x for reset
+	STR a1, [v1, #T_MCR]
+
+	LDMFD sp!, {lr, v1}
+	BX lr
+
+; Set match register 2
+; input:	a1	=	Timer match value
+;			a2	=	Reset
+set_match2
+	STMFD SP!,{lr, v1}	; Store register lr on stack
+	
+	LDR v1, =TIMER0		; Load TIMER0 Base address
+	STR a1, [v1, #T_MR2]	; set MR2
+	
+	; Get correct bit for MCR (bit x*3)
+	; I R S
+	; 0 1 2
+	MOV a1, #1
+	LSL a1, a1, #6			; Set Bit 6 = 1 for interrupt
+	ORR a1, a1, a2, LSL #7	; Set bit 7 = x for reset
+	STR a1, [v1, #T_MCR]
+
+	LDMFD sp!, {lr, v1}
+	BX lr
+
+; Set match register 3
+; input:	a1	=	Timer match value
+;			a2	=	Reset
+set_match3
+	STMFD SP!,{lr, v1}	; Store register lr on stack
+	
+	LDR v1, =TIMER0		; Load TIMER0 Base address
+	STR a1, [v1, #T_MR3]	; set MR3
+	
+	; Get correct bit for MCR (bit x*3)
+	; I R S
+	; 0 1 2
+	MOV a1, #1
+	LSL a1, a1, #9			; Set Bit 9 = 1 for interrupt
+	ORR a1, a1, a2, LSL #10	; Set bit 10 = x for reset
+	STR a1, [v1, #T_MCR]
+
+	LDMFD sp!, {lr, v1}
 	BX lr
 	
 read_timer0
@@ -318,13 +420,13 @@ interrupt_init
 		STR r1, [r0]
 
 		; Enable Interrupt for Timer 0
-		LDR r0, =TIMER0
-		;LDR r1, [r0, #T_MCR]
-		MOV r1, #0
-		ORR r1, r1, #0x08	; set bit 3 to 1 for interrupt
-		ORR r1, r1, #0x10	; set bit 4 to 1 for reset
-		;ORR r1, r2, #0x20	; set but 5 to 1 for stop
-		STR r1, [r0, #T_MCR]
+;		LDR r0, =TIMER0
+;		;LDR r1, [r0, #T_MCR]
+;		MOV r1, #0
+;		ORR r1, r1, #0x08	; set bit 3 to 1 for interrupt
+;		ORR r1, r1, #0x10	; set bit 4 to 1 for reset
+;		;ORR r1, r2, #0x20	; set but 5 to 1 for stop
+;		STR r1, [r0, #T_MCR]
 
 
 		; Enable FIQ's, Disable IRQ's

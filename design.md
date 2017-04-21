@@ -1,8 +1,10 @@
-# Wee Dig Dug: Design
+Wee Dig Dug: Design
+===================
 
 ## Overview
 
-The game is designed similar to a **Model-View-Controller (MVC)** framework. This architecture is a common way of designing applications with a User Interface.
+The game is designed similar to a **Model-View-Controller (MVC)** framework.
+This architecture is a common way of designing applications with a User Interface.
 A **MVC** framework works in the following way:
 
 * Each component is responsible for a particular task, and only that component is allowed to perform that task.
@@ -13,14 +15,40 @@ A **MVC** framework works in the following way:
 
 `TODO: Insert MVC image`
 
-In _WeeDigDug_, the **MVC** framework is modified to make it easier to develop the game.
-The main difference is in the **MVC** loop, where instead of the **View** being updaed by the **Model**,
-the **Controller** triggers a change in both of these sequentially, and the **View** reads the **Model**
-and renders the GUI.
+## Controller (controller.s)
+
+The **Controller** mainly contains interrupt handlers, and it is also the entry point for the game.
+In is, we do the following:
+
+* Initialize timer and timer match registers for periodic interrupts.
+* Listen for UART0 interrupt, read the keystrokes and perform the corresponding action
+* Listen for External Interrupt Button press and PAUSE the game.
+
+The controller is a relatively small component, responsible mainly for updating the **Model** via subroutines exposed by the **Model**.
 
 ## Model (model.s)
 
-Maintains the internal representation of the whole game.
+The **Model** maintains the internal representation of the board and triggers **View** updates. It exposed routines that allows the
+**Controller** to trigger updates on the **Model**.
+
+### Implementation
+
+The **Model** consists of an __"array"__ (created using the `FILL` directive) of size 19 X 15 bytes, each byte representing a grain
+of sand.
+The **Model** also consists of `DCD` tables to hold information of sprites. These tables are structured similar to <tt>C</tt> `struct`s.
+They look like this:
+
+```
+SPRITE
+	DCD [0-18]	; Holds X coordinate of the sprite
+	DCD [0-14]	; Holds Y coordinate of the sprite
+	DCD {1,4}	; Holds Number of lives the sprite has
+	DCD [0-3]	; Code for direction the sprite is moving/facing
+	DCD [0-18]	; Previous X coordinate of sprite
+	DCD [0-14]	; Previous Y coordinate of sprite
+	DCD [0-18]	; Original X position (to reset when respawning)
+	DCD [0-14]	; Original Y position
+```
 
 ### Uses
 

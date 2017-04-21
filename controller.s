@@ -9,6 +9,11 @@
 	IMPORT	interrupt_disable
 
 	IMPORT	read_timer0
+	IMPORT	set_match0
+	IMPORT	set_match1
+	IMPORT	set_match2
+	IMPORT	set_match3
+	IMPORT	reset_timer0
 
 	IMPORT	clear_7_seg
 	IMPORT	display_digit_on_7_seg
@@ -35,6 +40,9 @@
 	IMPORT	get_sand_at_xy
 	IMPORT	update_model
 	IMPORT	queue_movement_DUG
+	IMPORT	spawn_bullet
+	IMPORT	just_update_bullet
+	IMPORT	just_fygar_update
 
 	IMPORT	DUG_SPRITE
 	IMPORT	FYGAR_SPRITE_1
@@ -76,9 +84,21 @@ weedigdug
 game_begin
 ;	BL read_character
 
-	LDR a1, =TIMER_100ms
 	BL timer_init
 	BL reset_model
+
+	; Set MR1 to half sec and reset it
+	LDR a1, =HALF_SEC
+	MOV a2, #1
+	BL set_match1
+
+	; Set MR0 to update bullet and fygar every quarter sec
+	LDR a1, =HALF_SEC
+	LSR a1, a1, #1
+	MOV a2, #0
+	;BL set_match0
+
+	BL reset_timer0
 
 	LDR v1, =RUN_P
 	MOV ip, #1
@@ -99,11 +119,11 @@ FIQ_Handler
 TIMER0_Interrupt
 		LDR r0, =0xE0004000
 		LDR r1, [r0]
-		TST r1, #0x2
+		TST r1, #0x2	; test MR1 TODO: TEST MR0
 		BEQ EINT1_interrupt
 
 		STMFD SP!, {r0-r12, lr}   	; Save registers r0-r12, lr
-		; Timer0 interrupt
+		; MR1 interrupt
 
 		LDR v1, =RUN_P
 		LDRB ip, [v1]
@@ -141,11 +161,11 @@ U0RDA	; UART0 RDA interrupts
 
 		; UART interrupt handler
 		STMFD SP!, {r0-r12, lr}   	; Save registers r0-12 & lr
-		LDR v1, =DUG_SPRITE
-
+		
 		BL read_character
 		MOV ip, a1			; hold character in ip
 
+		LDR v1, =DUG_SPRITE
 		LDMIA v1, {a1-a2}	; load DUG_SPRITE coordinates
 		MOV a3, #-1			; dont update lives
 
@@ -165,6 +185,13 @@ U0RDA	; UART0 RDA interrupts
 		CMPNE ip, #'D'
 		BEQ	KEY_RIGHT
 
+		CMP ip, #' '
+		BEQ SPACEBAR_PRESS
+
+		CMP ip, #10
+		CMPNE ip, #13
+		BEQ ENTER_PRESS
+
 		BAL U0RDA_end
 		; TODO: check for collisions
 KEY_UP
@@ -182,6 +209,15 @@ KEY_LEFT
 KEY_RIGHT
 		MOV a1, #DIR_RIGHT
 		BAL	U0RDA_update
+
+ENTER_PRESS
+		LDR v1, =RUN_P
+		MOV a1, #0
+		STRB a1, [v1]	; Pull down RUNNING flag (PAUSE game)
+		BAL U0RDA_end
+SPACEBAR_PRESS
+		BL spawn_bullet
+		
 U0RDA_update
 		BL queue_movement_DUG
 U0RDA_end
