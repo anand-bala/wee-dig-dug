@@ -17,6 +17,7 @@
 	EXPORT	HIGH_SCORE
 	EXPORT	LEVEL
 	EXPORT	CURRENT_SCORE
+	EXPORT	CURRENT_TIME
 
 	EXPORT	BEGIN_GAME
 	EXPORT	PAUSE_GAME
@@ -39,6 +40,8 @@
 	EXPORT	spawn_bullet
 	EXPORT	just_update_bullet
 	EXPORT	just_fygar_update
+	EXPORT	toggle_pause_game
+	EXPORT	init_model
 
 
 	IMPORT	get_nbit_rand
@@ -46,6 +49,7 @@
 	IMPORT	draw_empty_board
 	IMPORT	populate_board
 	IMPORT	update_board
+	IMPORT	clear_sprite
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	CONSTANTS		;
@@ -1019,9 +1023,9 @@ is_fygar_check
 	BAL collision_end
 
 is_enemy_fatal			; Handle fatal collisions
-	LDR a1, [v1, #LIVES]
-	SUB a1, a1, #1
-	STR a1, [v1, #LIVES]
+	BL kill_sprite
+	LDR v1, =PUMP_SPRITE
+	BL kill_sprite
 	BAL collision_end
 is_enemy_sand_wall
 	; First backtrack its movements by setting current position to old position
@@ -1043,26 +1047,30 @@ is_pump_check
 ; 2. Check for wall collision
 	CMP a2, #0	; check
 	MOVLT a1, #2
-	BLT collision_end	; end if x < 0
+	BLT is_pump_fatal	; end if x < 0
 	CMP a2, #18 ; check
 	MOVGT a1, #2
-	BGT collision_end	; end if x > 18
+	BGT is_pump_fatal	; end if x > 18
 
 	CMP a3, #0	; check
 	MOVLT a1, #2
-	BLT collision_end	; end if y < 0
+	BLT is_pump_fatal	; end if y < 0
 	CMP a3, #14 ; check
 	MOVGT a1, #2
-	BGT collision_end	; end if y > 14
+	BGT is_pump_fatal	; end if y > 14
 
 ; 3. check for sand collision
 	MOV a1, a2			; Move x into a1
 	MOV a2, a3			; Move y into a2
 	BL get_sand_at_xy		; Get sand at current position
 	; 1 if sand, 0 if nothing
-	; so just return
+	CMP a1, #1
+	BEQ is_pump_fatal
 	BAL collision_end
-
+is_pump_fatal
+	LDR v1, =PUMP_SPRITE
+	MOV ip, #0
+	STR ip, [v1]
 collision_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
@@ -1259,7 +1267,24 @@ toggle_pause_game
 	STMFD sp!, {lr, v1}
 	BX lr
 
+;;;;;;;;;;;;;;;;
+; Kill Sprite
+;;;;;;;;;;;;;;;;
+kill_sprite
+	; v1 = sprite to kill
+	STMFD sp!, {lr, v1}
+	
+	LDR ip, [v1, #LIVES]
+	SUB ip, ip, #1
+	STR ip, [v1, #LIVES]
+	CMP ip, #0
+	BLEQ clear_sprite
+	MOVEQ ip, #100
+	STREQ ip, [v1, #X_POS]
+	STREQ ip, [v1, #Y_POS]
 
+	LDMFD sp!, {lr, v1}
+	BX lr
 
 
 	END

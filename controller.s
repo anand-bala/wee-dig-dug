@@ -43,6 +43,8 @@
 	IMPORT	spawn_bullet
 	IMPORT	just_update_bullet
 	IMPORT	just_fygar_update
+	IMPORT	toggle_pause_game
+	IMPORT	init_model
 
 	IMPORT	DUG_SPRITE
 	IMPORT	FYGAR_SPRITE_1
@@ -73,6 +75,7 @@ HALF_SEC	EQU	0x08CA000
 TIMER_100ms	EQU	0x1C2000
 TIME_120s	EQU	0x83D60000
 
+begin_str	=	"Press any key to begin",12,13,0
 RUN_P		=	0,0
 EXIT_P		=	0,0
 UPDATE_P	=	0,0
@@ -82,15 +85,16 @@ weedigdug
 	STMFD sp!, {lr}
 	BL pin_connect_block_setup
 	BL uart_init
-	BL interrupt_init
-
-	MOV a1, #12
-	BL output_character
 
 ; Begin GAME
 game_begin
-;	BL read_character
+	MOV a1, #12
+	BL output_character
+	LDR v1, =begin_str
+	BL output_string
+	BL read_character
 
+   	BL interrupt_init
 	BL timer_init
 	BL init_model
 
@@ -218,7 +222,7 @@ ENTER_PRESS
 		BAL U0RDA_end
 SPACEBAR_PRESS
 		BL spawn_bullet
-		
+		BAL U0RDA_end
 U0RDA_update
 		BL queue_movement_DUG
 U0RDA_end
