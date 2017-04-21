@@ -22,12 +22,14 @@
 	IMPORT	GAME_BOARD
 	IMPORT	HIGH_SCORE
 	IMPORT	LEVEL
+	IMPORT	CURRENT_SCORE
 	
 	; Sprite Structures
 	IMPORT	DUG_SPRITE
 	IMPORT	FYGAR_SPRITE_1
 	IMPORT	POOKA_SPRITE_1
 	IMPORT	POOKA_SPRITE_2
+	IMPORT	PUMP_SPRITE
 
 	; Library subroutines
 	IMPORT	num_to_dec_str
@@ -38,6 +40,12 @@
 	EXPORT	update_board
 	EXPORT	draw_empty_board
 	EXPORT	populate_board
+
+	; GUI Data (EXPORT to model)
+	EXPORT	PUMP_GUI
+	EXPORT	DUG_GUI
+	EXPORT	FYGAR_GUI
+	EXPORT	POOKA_GUI
 	
 	; Model routines
 	IMPORT	get_sand_at_xy	
@@ -87,10 +95,10 @@ BOARD_GUI
 	DCB "Z                   Z",13,10
 	DCB "ZZZZZZZZZZZZZZZZZZZZZ",13,10,0
 
-HIGH_SCORE_str	=	"HIGH SCORE: "
+HIGH_SCORE_str	=	27,"[19;0fHIGH SCORE: "
 HIGH_SCORE_val	=	"000000",10,13,0
 
-CURRENT_SCORE_str	=	"SCORE: "
+CURRENT_SCORE_str	=	27,"[18;6fSCORE: "
 CURRENT_SCORE_val	=	"000000",10,13,0
 
 	ALIGN
@@ -191,62 +199,66 @@ populate_end_loop
 ; Now draw DUG
 
 	LDR v1, =DUG_SPRITE	; Load DUG Sprite
+	LDR ip, [v1, #DIRECTION]
 	LDR v2, =DUG_GUI
-	LDRB a1, [v2]		; Load DUG GUI Character
+	LDRB a1, [v2, ip]		; Load DUG GUI Character
 	BL draw_sprite		; draw DUG
 
 populate_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Update board GUI
+; Does the following, in the following order:
+;	1. Draw Enemies
+;	2. Draw Bullets
+;	3. Draw Dug
+;	4. Show highscore and score
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 update_board
 	STMFD sp!, {lr, v1-v8}
 
-	; v8 = sprite addresses
+; 1. Draw Enemies
+; -- 1.1. Draw Fygar
+	LDR v1, =FYGAR_GUI
+	LDRB a1, [v1]
+	LDR v1, =FYGAR_SPRITE_1
+	BL draw_sprite
+; -- 1.2. Draw Pooka 1
+	LDR v1, =POOKA_GUI
+	LDRB a1, [v1]
+	LDR v1, =POOKA_SPRITE_1
+	BL draw_sprite
+; -- 1.3. Draw Pooka 2
+	LDR v1, =POOKA_GUI
+	LDRB a1, [v1]
+	LDR v1, =POOKA_SPRITE_2
+	BL draw_sprite
 
-	LDR v8, =DUG_SPRITE
+; 2. Draw Bullet
+	LDR v1, =PUMP_SPRITE
+	LDR v2, =PUMP_GUI
+	LDR ip, [v1, #DIRECTION]
+	LDR a1, [v2, ip]
+	BL draw_sprite
+; 3. Draw Dug
+	LDR v1, =DUG_SPRITE
+	LDR v2, =DUG_GUI
+	LDR ip, [v1, #DIRECTION]
+	LDR a1, [v2, ip]
+	BL draw_sprite
 
-	; Load Old X position and clear at position
-	LDR a1, [v8, #OLD_X_POS]
-	ADD a1, a1, #GUI_X_ORIGIN
-	MOV	a2, #3					; 3 char wide string
-	LDR v1, =ESC_cursor_pos_col
+; 4. Show Scores
+	LDR v1, =CURRENT_SCORE
+	LDR a1, [v1]
+	MOV a2, #6
+	LDR v1, =CURRENT_SCORE_val
 	BL num_to_dec_str
 
-	; Load Old Y position and clear at position
-	LDR a1, [v8, #OLD_Y_POS]
-	ADD a1, a1, #GUI_Y_ORIGIN
-	MOV	a2, #3					; 3 char wide string
-	LDR v1, =ESC_cursor_pos_line
-	BL num_to_dec_str
-
-	LDR v1, =ESC_cursor_position
+	LDR v1, =CURRENT_SCORE_str
 	BL output_string
-	
-	MOV a1, #' '
-	BL output_character
-	
-	; Load X position and draw at position
-	LDR a1, [v8, #X_POS]
-	ADD a1, a1, #GUI_X_ORIGIN
-	MOV	a2, #3					; 3 char wide string
-	LDR v1, =ESC_cursor_pos_col
-	BL num_to_dec_str
-
-	; Load Y position and draw at position
-	LDR a1, [v8, #Y_POS]
-	ADD a1, a1, #GUI_Y_ORIGIN
-	MOV	a2, #3					; 3 char wide string
-	LDR v1, =ESC_cursor_pos_line
-	BL num_to_dec_str
-
-	LDR v1, =ESC_cursor_position
-	BL output_string
-	
-	LDR ip, [v8, #DIRECTION]	; get current direction Dug is facing
-	LDR v1, =DUG_GUI 			; load address for Dug GUI
-	LDRB a1, [v1, ip]		   	; load character for direction
-	BL output_character
 
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
@@ -294,6 +306,10 @@ draw_char_at_xy
 ;	a1 = Character to represent sprite
 draw_sprite
 	STMFD sp!, {lr, v1, v8}
+
+	LDR ip, [v1, #LIVES]
+	CMP ip, #0			; check if sprite is dead (why would you draw a zombie?????)
+	BEQ draw_sprite_end
 	
 	MOV ip, a1		; store character in ip
 	MOV v8, v1		; store sprite address in v8
@@ -337,7 +353,7 @@ draw_sprite
 	
 	MOV a1, ip		; Move character back to a1
 	BL output_character
-
+draw_sprite_end
 	LDMFD sp!, {lr, v1, v8}
 	BX lr
 
