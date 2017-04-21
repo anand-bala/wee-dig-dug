@@ -16,6 +16,7 @@
 	EXPORT	GAME_BOARD
 	EXPORT	HIGH_SCORE
 	EXPORT	LEVEL
+	EXPORT	CURRENT_SCORE											 
 	
 	EXPORT	DUG_SPRITE
 	EXPORT	FYGAR_SPRITE_1
@@ -29,12 +30,16 @@
 	EXPORT	get_sand_at_xy
 	EXPORT	update_model
 	EXPORT	queue_movement_DUG
+	EXPORT	spawn_bullet
+	EXPORT	just_update_bullet
+	EXPORT	just_fygar_update
 
 
 	IMPORT	get_nbit_rand
 
 	IMPORT	draw_empty_board
 	IMPORT	populate_board
+	IMPORT	update_board
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	CONSTANTS		;
@@ -53,6 +58,8 @@ LIVES		EQU 2*4
 DIRECTION	EQU 3*4
 OLD_X_POS	EQU 4*4
 OLD_Y_POS	EQU 5*4
+ORIGINAL_X	EQU 6*4
+ORIGINAL_Y	EQU 7*4
 
 DIR_UP		EQU 0
 DIR_DOWN	EQU 1
@@ -70,6 +77,8 @@ DUG_SPRITE		; State of the Dug sprite
 	DCD DIR_LEFT	   	; direction
 	DCD 32			; Old X
 	DCD 20			; Old Y
+	DCD 9			; Original X
+	DCD 7			; Original Y
 
 FYGAR_SPRITE_1		; State of 1st Fygar sprite
 	DCD 1			; x position
@@ -78,6 +87,8 @@ FYGAR_SPRITE_1		; State of 1st Fygar sprite
 	DCD DIR_RIGHT		; direction
 	DCD 1			; Old X
 	DCD 1			; Old Y
+	DCD 9			; Original X
+	DCD 7			; Original Y
 
 POOKA_SPRITE_1		; State of 1st Pooka sprite
 	DCD 10			; x position
@@ -86,6 +97,8 @@ POOKA_SPRITE_1		; State of 1st Pooka sprite
 	DCD DIR_UP		; direction
 	DCD 10			; Old X
 	DCD 1			; Old Y
+	DCD 9			; Original X
+	DCD 7			; Original Y
 
 POOKA_SPRITE_2		; State of 2nd Pooka sprite
 	DCD 15			; x position
@@ -94,6 +107,8 @@ POOKA_SPRITE_2		; State of 2nd Pooka sprite
 	DCD DIR_DOWN		; direction
 	DCD 15			; Old X
 	DCD 15			; Old Y
+	DCD 9			; Original X
+	DCD 7			; Original Y
 
 PUMP_SPRITE		; State of the Pump sprite
 	DCD 9			; x position
@@ -102,6 +117,8 @@ PUMP_SPRITE		; State of the Pump sprite
 	DCD DIR_LEFT	   	; direction
 	DCD 8			; Old X
 	DCD 7			; Old Y
+	DCD 9			; Original X
+	DCD 7			; Original Y
 
 
 HIGH_SCORE	DCD 0
@@ -149,10 +166,18 @@ reset_board_loop
 ; Set Dug sprite to center with 4 lives	and looking left
 	LDR v1, =DUG_SPRITE
 	MOV a1, #BOARD_CENTER_X
+	STR a1, [v1, #ORIGINAL_X]
+	STR a1, [v1, #OLD_X_POS]
+	STR a1, [v1, #X_POS]
 	MOV a2, #BOARD_CENTER_Y
+	STR a2, [v1, #ORIGINAL_Y]
+	STR a2, [v1, #OLD_Y_POS]
+	STR a2, [v1, #Y_POS]
 	MOV a3, #4
+	STR a3, [v1, #LIVES]
 	MOV a4, #DIR_LEFT
-	BL update_sprite
+	STR a4, [v1, #DIRECTION]
+
 	; Clear sand around Dug	(8,7),(9,7),(10,7)
 	MOV a1, #8
 	MOV a2, #7
@@ -184,6 +209,7 @@ reset_board_loop
 	MOVGE a1, #14
 	STR a1, [v1, #Y_POS]		; update Y pos
 	STR a1, [v1, #OLD_Y_POS]	; update old Y pos
+	STR a1, [v1, #ORIGINAL_Y]	; set original Y
 	MOV a2, a1
 	
 	; set random X in range [0-18]	(5 bit with check)
@@ -192,7 +218,9 @@ reset_board_loop
 	CMP a1, #19
 	MOVGE a1, #18
 	STR a1, [v1, #X_POS]		; update X pos
-	STR a1, [v1, #OLD_X_POS]	; update X pos
+	STR a1, [v1, #OLD_X_POS]	; update old X pos
+	STR a1, [v1, #ORIGINAL_X]	; set original X
+
 		
 	; Clear sand for Fygar1 movement  (x-1,y) (x,y) (x+1,y)
 
@@ -229,6 +257,7 @@ reset_board_loop
 	MOVGE a1, #14
 	STR a1, [v1, #Y_POS]		; update Y pos
 	STR a1, [v1, #OLD_Y_POS]	; update old Y pos
+	STR a1, [v1, #ORIGINAL_Y]	; set original Y
 	MOV a2, a1
 	
 	; set random X in range [0-18]	(5 bit with check)
@@ -237,7 +266,8 @@ reset_board_loop
 	CMP a1, #19
 	MOVGE a1, #18
 	STR a1, [v1, #X_POS]		; update X pos
-	STR a1, [v1, #OLD_X_POS]	; update X pos
+	STR a1, [v1, #OLD_X_POS]	; update old X pos
+	STR a1, [v1, #ORIGINAL_X]	; set original X
 	; Clear sand for Pooka1 movement  (x-1,y) (x,y) (x+1,y)
 
 	; clear_at_x_y changes a1 and a2. Hence, saving x and y in v2, v3
@@ -273,6 +303,7 @@ reset_board_loop
 	MOVGE a1, #14
 	STR a1, [v1, #Y_POS]		; update Y pos
 	STR a1, [v1, #OLD_Y_POS]	; update old Y pos
+	STR a1, [v1, #ORIGINAL_Y]	; set original Y
 	MOV a2, a1
 	
 	; set random X in range [0-18]	(5 bit with check)
@@ -281,7 +312,8 @@ reset_board_loop
 	CMP a1, #19
 	MOVGE a1, #18
 	STR a1, [v1, #X_POS]		; update X pos
-	STR a1, [v1, #OLD_X_POS]	; update X pos
+	STR a1, [v1, #OLD_X_POS]	; update old X pos
+	STR a1, [v1, #ORIGINAL_X]	; set original X
 	; Clear sand for Pooka2 movement  (x-1,y) (x,y) (x+1,y)
 
 	; clear_at_x_y changes a1 and a2. Hence, saving x and y in v2, v3
@@ -320,6 +352,88 @@ reset_board_loop
 
 ;---------------------reset model--------------------------------------;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Respawn Game Sprites (if they are not completely dead)
+;
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+respawn_game_sprites
+	STMFD sp!, {lr, v1-v8}
+
+respawn_dug
+	; Reset Dug's position to original position
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #LIVES]
+	CMP a1, #0
+	BEQ respawn_fygar1
+
+	LDR a1, [v1, #X_POS]
+	STR a1, [v1, #OLD_X_POS]
+	LDR a1, [v1, #ORIGINAL_X]
+	STR a1, [v1, #X_POS]
+	
+	LDR a1, [v1, #Y_POS]
+	STR a1, [v1, #OLD_Y_POS]
+	LDR a1, [v1, #ORIGINAL_Y]
+	STR a1, [v1, #Y_POS]
+respawn_fygar1
+	; Reset Fygar1's position to original position
+	LDR v1, =FYGAR_SPRITE_1
+	LDR a1, [v1, #LIVES]
+	CMP a1, #0
+	BEQ respawn_pooka1
+
+	LDR a1, [v1, #X_POS]
+	STR a1, [v1, #OLD_X_POS]
+	LDR a1, [v1, #ORIGINAL_X]
+	STR a1, [v1, #X_POS]
+	
+	LDR a1, [v1, #Y_POS]
+	STR a1, [v1, #OLD_Y_POS]
+	LDR a1, [v1, #ORIGINAL_Y]
+	STR a1, [v1, #Y_POS]	
+
+respawn_pooka1
+	; Reset Pooka1's position to original position
+	LDR v1, =POOKA_SPRITE_1
+	LDR a1, [v1, #LIVES]
+	CMP a1, #0
+	BEQ respawn_pooka2
+
+	LDR a1, [v1, #X_POS]
+	STR a1, [v1, #OLD_X_POS]
+	LDR a1, [v1, #ORIGINAL_X]
+	STR a1, [v1, #X_POS]
+	
+	LDR a1, [v1, #Y_POS]
+	STR a1, [v1, #OLD_Y_POS]
+	LDR a1, [v1, #ORIGINAL_Y]
+	STR a1, [v1, #Y_POS]
+
+respawn_pooka2
+; Reset Pooka2's position to original position
+	LDR v1, =POOKA_SPRITE_2
+	LDR a1, [v1, #LIVES]
+	CMP a1, #0
+	BEQ respawn_end
+
+	LDR a1, [v1, #X_POS]
+	STR a1, [v1, #OLD_X_POS]
+	LDR a1, [v1, #ORIGINAL_X]
+	STR a1, [v1, #X_POS]
+	
+	LDR a1, [v1, #Y_POS]
+	STR a1, [v1, #OLD_Y_POS]
+	LDR a1, [v1, #ORIGINAL_Y]
+	STR a1, [v1, #Y_POS]
+
+respawn_end
+	
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
+
+
+;---------------------reset model--------------------------------------;
 
 ;;;;;;;;;;;;;;;;
 ; UPDATE MODEL ;
@@ -348,6 +462,12 @@ update_model
 	; Check if LIVES != 0
 	CMP a3, #0
 	BEQ update_fygar
+
+	MOV ip, a1
+	MOV a1, #2	; to get a 2 bit rand
+	BL get_nbit_rand
+	MOV a4, a1
+	MOV a1, ip
 
 	; Update X and Y based on Direction
 	
@@ -508,9 +628,14 @@ update_bullet
 
 update_dug
 	BL update_sprite
+	LDR v1, =UPDATE_DUG_P
+	MOV ip, #0
+	STRB ip, [v1]
 
-; TODO: Detect and handle collisions
-; TODO: Trigger GUI updates
+; Detect and handle collisions
+	BL handle_and_detect_all
+; Trigger GUI updates
+	BL update_board
 ; TODO: Trigger peripheral updates
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
@@ -660,11 +785,9 @@ get_xy_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
-; Detect collision of sprite with
-; 0 -> nothing
-; 1 -> Sand
-; 2 -> Wall
-; 3 -> Fatal Collision
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Detect collision of sprite
 ; input
 ;	v1 = address to sprite
 ;	a1 = Type of sprite
@@ -672,18 +795,22 @@ get_xy_end
 ;		1 = POOKA
 ;		2 = FYGAR
 ;		3 = PUMP/BULLET
-; output
-;	a1 = output
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 detect_sprite_collision
-	; TODO: Just update the actual GUI
 	STMFD sp!, {lr, v1-v8}
 	; v8 = addresses
 
 	; a2 = X POS
 	; a3 = Y POS
+	; a4 = Hit count if hitcount reached 2 ==> collision
 
 	LDR a2, [v1, #X_POS]
 	LDR a3, [v1, #Y_POS]
+	MOV a4, #0
+	LDR ip, [v1, #LIVES]
+	CMP ip, #0
+	BEQ collision_end
 
 	CMP a1, #3
 	BEQ is_pump_check
@@ -700,43 +827,50 @@ is_dug_check
 ; Sprite is Dug.
 ; 1. Check for fatal collision (with fygar or pooka)
 	LDR v8, =FYGAR_SPRITE_1		; Load FYGAR
+
 	; Check if X Positions are equal
 	LDR ip, [v8, #X_POS]		; Load its X POSITION
 	CMP ip, a2			; Compare the X positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL)
-	BEQ collision_end
+	MOVEQ a4, #1			; Increment hit count
 
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL)
-	BEQ collision_end
+	ADDEQ a4, #1			; Increment hit count
+	CMP a4, #2
+	BEQ is_dug_fatal
+
+	MOV a4, #0
 
 	LDR v8, =POOKA_SPRITE_1		; Load POOKA
-	; Check if X Positions are equal
+		; Check if X Positions are equal
 	LDR ip, [v8, #X_POS]		; Load its X POSITION
 	CMP ip, a2			; Compare the X positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL)
-	BEQ collision_end
+	MOVEQ a4, #1			; Increment hit count
 
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL)
-	BEQ collision_end
+	ADDEQ a4, #1			; Increment hit count
+	CMP a4, #2
+	BEQ is_dug_fatal
+	
+	MOV a4, #0
 
 	LDR v8, =POOKA_SPRITE_2		; Load POOKA1
-	; Check if X Positions are equal
+		; Check if X Positions are equal
 	LDR ip, [v8, #X_POS]		; Load its X POSITION
 	CMP ip, a2			; Compare the X positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL)
-	BEQ collision_end
+	MOVEQ a4, #1			; Increment hit count
 
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL)
-	BEQ collision_end
+	ADDEQ a4, #1			; Increment hit count
+	CMP a4, #2
+	BEQ is_dug_fatal
+	
+	MOV a4, #0
 
 ; 2. check for wall collision
 	CMP a2, #0	; check
@@ -759,40 +893,65 @@ is_dug_check
 	MOV a2, a3			; Move y into a2
 	BL get_sand_at_xy		; Get sand at current position
 	; 1 if sand, 0 if nothing
-	; so just return
+	CMP a1, #1
+	BEQ is_dug_sand
+	
+	BAL collision_end
+
+is_dug_fatal			; Handle fatal collisions
+	LDR a1, [v1, #LIVES]
+	SUB a1, a1, #1
+	STR a1, [v1, #LIVES]
+	BL respawn_game_sprites
+	BAL collision_end
+is_dug_sand
+	LDR v8, =CURRENT_SCORE
+	LDR a1, [v8]
+	ADD a1, a1, #10
+	STR a1, [v8]
+	
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	BL clear_at_x_y
+
 	BAL collision_end
 
 is_pooka_check
 is_fygar_check
 ; Sprite is either Pooka or Fygar. Treat them same. #EQUALITY
 ; 1. Check for fatal collisions with pump
+	MOV a4, #0
 	LDR v8, =PUMP_SPRITE
-	; Check if X Positions are equal
+		; Check if X Positions are equal
 	LDR ip, [v8, #X_POS]		; Load its X POSITION
 	CMP ip, a2			; Compare the X positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL)
-	BEQ collision_end
+	MOVEQ a4, #1			; Increment hit count
+
+	MOV a4, #0
 
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
-	MOVEQ a1, #3			; set return value to 3 (FATAL)
-	BEQ collision_end
+	ADDEQ a4, #1			; Increment hit count
+	CMP a4, #2
+	BEQ is_enemy_fatal
 
+	MOV a4, #0
 ; 2. Check for wall collision
 	CMP a2, #0	; check
-	MOVLT a1, #2
-	BLT collision_end	; end if x < 0
+	MOVLE a1, #2
+	BLT is_enemy_sand_wall	; end if x < 0
 	CMP a2, #18 ; check
-	MOVGT a1, #2
-	BGT collision_end	; end if x > 18
+	MOVGE a1, #2
+	BGT is_enemy_sand_wall	; end if x > 18
 
 	CMP a3, #0	; check
-	MOVLT a1, #2
-	BLT collision_end	; end if y < 0
+	MOVLE a1, #2
+	BLT is_enemy_sand_wall	; end if y < 0
 	CMP a3, #14 ; check
-	MOVGT a1, #2
-	BGT collision_end	; end if y > 14
+	MOVGE a1, #2
+	BGT is_enemy_sand_wall	; end if y > 14
 
 ; 3. check for sand collision
 ; Check for sand on board model at xy, and if collision, increment score
@@ -800,7 +959,27 @@ is_fygar_check
 	MOV a2, a3			; Move y into a2
 	BL get_sand_at_xy		; Get sand at current position
 	; 1 if sand, 0 if nothing
-	; so just return
+	CMP a1, #1
+	BEQ is_enemy_sand_wall
+	BAL collision_end
+
+is_enemy_fatal			; Handle fatal collisions
+	LDR a1, [v1, #LIVES]
+	SUB a1, a1, #1
+	STR a1, [v1, #LIVES]
+	BAL collision_end
+is_enemy_sand_wall
+	; First backtrack its movements by setting current position to old position
+	LDR ip, [v1, #OLD_X_POS]
+	STR ip, [v1, #X_POS]
+	LDR ip, [v1, #OLD_Y_POS]
+	STR ip, [v1, #Y_POS]
+
+	; Then set him off on a random direction (coz we dont care about the bad guy)
+	MOV a1, #2		; 2 bit rand (0-3) = new direction
+	BL get_nbit_rand
+	STR a1, [v1, #DIRECTION]
+
 	BAL collision_end
 
 is_pump_check
@@ -829,9 +1008,164 @@ is_pump_check
 	; so just return
 	BAL collision_end
 
-
 collision_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
+;--------------------detect collision--------------------------------------;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Update FYGAR
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+just_fygar_update
+	STMFD sp!, {lr, v1}
+	; Load FYGAR 1
+	LDR v1, =FYGAR_SPRITE_1
+	; Get current stats
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	LDR a3, [v1, #LIVES]
+	LDR a4, [v1, #DIRECTION]
+
+	; Check if LIVES != 0
+	CMP a3, #0
+	BEQ finish_fygar_update
+
+	MOV ip, a1
+	MOV a1, #2	; to get a 2 bit rand
+	BL get_nbit_rand
+	MOV a4, a1
+	MOV a1, ip
+
+	; Update X and Y based on Direction
+	
+	CMP a4, #DIR_UP		; Check if direction is UP
+	SUBEQ a2, a2, #1	; Then decrement y (a2)
+	BEQ finish_fygar_update	; finish updating fygar
+	
+	CMP a4, #DIR_DOWN	; Check if dir is DOWN
+	ADDEQ a2, a2, #1	; Then increment y (a2)
+	BEQ finish_fygar_update	; finish updating fygar
+
+	CMP a4, #DIR_LEFT	; check if dir == LEFT
+	SUBEQ a1, a1, #1	; then decrement x (a1)
+	BEQ finish_fygar_update	; finish updating fygar
+
+	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
+	ADDEQ a1, a1, #1	; then increment x (a1)
+	BEQ finish_fygar_update	; finish updating fygar
+
+finish_fygar_update
+	BL update_sprite	; update fygar sprite
+
+	MOV a1,	#2
+	LDMFD sp!, {lr, v1}
+	BX lr
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Spawn Bullet
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+spawn_bullet
+	STMFD sp!, {lr, v1}
+	
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	LDR a3, [v1, #DIRECTION]
+
+	CMP a3, #DIR_UP
+	SUBEQ a2, a2, #1
+
+	CMP a3, #DIR_DOWN
+	ADDEQ a2, a2, #1
+
+	CMP a3, #DIR_LEFT
+	SUBEQ a1, a1, #1
+
+	CMP a3, #DIR_RIGHT
+	ADDEQ a1, a1, #1
+
+	LDR v1, =PUMP_SPRITE
+	STR a1, [v1, #X_POS]
+	STR a1, [v1, #OLD_X_POS]
+	STR a2, [v1, #Y_POS]
+	STR a2, [v1, #OLD_Y_POS]
+	MOV a1, #1
+	STR a1, [v1, #LIVES]
+	STR a3, [v1, #DIRECTION] 
+	
+	LDMFD sp!, {lr, v1}
+	BX lr
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Update Bullet
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+just_update_bullet
+	STMFD sp!, {lr, v1}
+	; Load BULLET
+	LDR v1, =PUMP_SPRITE
+	; Get current stats
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	LDR a3, [v1, #LIVES]
+	LDR a4, [v1, #DIRECTION]
+
+	; Check if LIVES != 0
+	CMP a3, #0
+	BEQ finish_pump_update
+
+	MOV ip, a1
+	MOV a1, #2	; to get a 2 bit rand
+	BL get_nbit_rand
+	MOV a4, a1
+	MOV a1, ip
+
+	; Update X and Y based on Direction
+	
+	CMP a4, #DIR_UP		; Check if direction is UP
+	SUBEQ a2, a2, #1	; Then decrement y (a2)
+	BEQ finish_pump_update	; finish updating Bullet
+	
+	CMP a4, #DIR_DOWN	; Check if dir is DOWN
+	ADDEQ a2, a2, #1	; Then increment y (a2)
+	BEQ finish_pump_update	; finish updating Bullet
+
+	CMP a4, #DIR_LEFT	; check if dir == LEFT
+	SUBEQ a1, a1, #1	; then decrement x (a1)
+	BEQ finish_pump_update	; finish updating Bullet
+
+	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
+	ADDEQ a1, a1, #1	; then increment x (a1)
+	BEQ finish_pump_update	; finish updating Bullet
+
+finish_pump_update
+	BL update_sprite	; update Bullet sprite
+
+	MOV a1,	#2
+	LDMFD sp!, {lr, v1}
+	BX lr	
+	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Detect collision for all sprites
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+handle_and_detect_all
+	STMFD sp!, {lr, v1}
+	LDR v1, =FYGAR_SPRITE_1
+	MOV a1,	#2
+	BL detect_sprite_collision
+	LDR v1, =POOKA_SPRITE_1
+	MOV a1,	#1
+	BL detect_sprite_collision
+	LDR v1, =POOKA_SPRITE_2
+	MOV a1,	#1
+	BL detect_sprite_collision
+	LDR v1, =PUMP_SPRITE
+	MOV a1, #3
+	BL detect_sprite_collision
+	LDR v1, =DUG_SPRITE
+	MOV a1,	#0
+	BL detect_sprite_collision
+
+	LDMFD sp!, {lr, v1}
+	BX lr
 	END
