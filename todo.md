@@ -33,6 +33,6 @@ Pending Work
 
 # Hardware
 
-* Change pin_connect_block to not initialize any Button except the EINT1 button
+* ~~Change pin_connect_block to not initialize any Button except the EINT1 button~~
 
 
