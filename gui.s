@@ -49,7 +49,10 @@
 	EXPORT	POOKA_GUI
 	
 	; Model routines
-	IMPORT	get_sand_at_xy	
+	IMPORT	get_sand_at_xy
+	
+	EXPORT	debug_print1
+	EXPORT	debug_print2	
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -101,6 +104,13 @@ HIGH_SCORE_val	=	"000000",10,13,0
 
 CURRENT_SCORE_str	=	27,"[18;6fSCORE: "
 CURRENT_SCORE_val	=	"000000",10,13,0
+
+DEBUG1_str	=	27,"[20;0fDEBUG1: "
+DEBUG1_val	=	"000000",10,13,0
+
+DEBUG2_str	=	27,"[20;0fDEBUG2: "
+DEBUG2_val1	=	"000000, "
+DEBUG2_val2	=	"000000",10,13,0
 
 	ALIGN
 
@@ -374,6 +384,33 @@ clear_sprite
 	MOV a3, #' '
 	BL draw_char_at_xy
 
+	LDMFD sp!, {lr, v1}
+	BX lr
+
+debug_print1
+	STMFD sp!, {lr, v1}
+	LDR v1, =DEBUG1_val
+	MOV a2, #6
+	BL num_to_dec_str
+
+	LDR v1, =DEBUG1_str
+	BL output_string
+	LDMFD sp!, {lr, v1}
+	BX lr
+debug_print2
+	STMFD sp!, {lr, v1}
+	MOV ip, a2
+	LDR v1, =DEBUG2_val1
+	MOV a2, #6
+	BL num_to_dec_str
+
+	LDR v1, =DEBUG2_val2
+	MOV a1, ip
+	MOV a2, #6
+	BL num_to_dec_str
+
+	LDR v1, =DEBUG2_str
+	BL output_string
 	LDMFD sp!, {lr, v1}
 	BX lr
 

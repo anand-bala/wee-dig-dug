@@ -416,7 +416,7 @@ respawn_dug
 	LDR a1, [v1, #LIVES]
 	CMP a1, #0
 	BEQ respawn_fygar1
-
+	BL clear_sprite
 	LDR a1, [v1, #X_POS]
 	STR a1, [v1, #OLD_X_POS]
 	LDR a1, [v1, #ORIGINAL_X]
@@ -432,6 +432,7 @@ respawn_fygar1
 	LDR a1, [v1, #LIVES]
 	CMP a1, #0
 	BEQ respawn_pooka1
+	BL clear_sprite
 
 	LDR a1, [v1, #X_POS]
 	STR a1, [v1, #OLD_X_POS]
@@ -449,6 +450,7 @@ respawn_pooka1
 	LDR a1, [v1, #LIVES]
 	CMP a1, #0
 	BEQ respawn_pooka2
+	BL clear_sprite
 
 	LDR a1, [v1, #X_POS]
 	STR a1, [v1, #OLD_X_POS]
@@ -466,6 +468,7 @@ respawn_pooka2
 	LDR a1, [v1, #LIVES]
 	CMP a1, #0
 	BEQ respawn_end
+	BL clear_sprite
 
 	LDR a1, [v1, #X_POS]
 	STR a1, [v1, #OLD_X_POS]
@@ -736,26 +739,26 @@ update_sprite
 
 
 update_x
-	CMP a1, #0
-	BLT update_y
-	CMP a1, #18
-	BGT update_y
-	CMP a1, #-1	; check whether to update x position or not
+;	CMP a1, #0
+;	BLT update_y
+;	CMP a1, #18
+;	BGT update_y
+;	CMP a1, #-1	; check whether to update x position or not
 	; if != -1 (update = true):
 	LDR v2, [v1, #X_POS]	; temporarily hold old x_pos
 	STR v2, [v1, #OLD_X_POS]	; store old x position
-   	STRNE a1, [v1, #X_POS]	; update X_POS value for given sprite
+   	STR a1, [v1, #X_POS]	; update X_POS value for given sprite
 
 update_y
-	CMP a2, #0
-	BLT update_lives
-	CMP a2, #14
-	BGT update_lives
-	CMP a2, #-1	; check whether to update y position or not
+;	CMP a2, #0
+;	BLT update_lives
+;	CMP a2, #14
+;	BGT update_lives
+;	CMP a2, #-1	; check whether to update y position or not
 	; if != -1 (update = true):
 	LDR v2, [v1, #Y_POS]	; temporarily hold old y_pos
 	STR v2, [v1, #OLD_Y_POS]	; store old y position
-   	STRNE a2, [v1, #Y_POS]	; update Y_POS value for given sprite
+   	STR a2, [v1, #Y_POS]	; update Y_POS value for given sprite
 
 update_lives
 	CMP a3, #-1	; check whether to update LIVES or not
@@ -959,6 +962,9 @@ is_dug_fatal			; Handle fatal collisions
 	LDR a1, [v1, #LIVES]
 	SUB a1, a1, #1
 	STR a1, [v1, #LIVES]
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	BL clear_sprite
 	CMP a1, #0
 	BLEQ model_game_over
 	BLGT respawn_game_sprites
@@ -987,10 +993,36 @@ is_fygar_check
 	CMP ip, a2			; Compare the X positions
 	MOVEQ a4, #1			; Increment hit count
 
-	MOV a4, #0
-
 	; Check if Y Positions are equal
 	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
+	CMP ip, a3			; Compare the Y positions
+	ADDEQ a4, #1			; Increment hit count
+	CMP a4, #2
+	BEQ is_enemy_fatal
+
+	; Check if Y Positions are equal
+	LDR ip, [v8, #OLD_Y_POS]		; Load its Y POSITION
+	CMP ip, a3			; Compare the Y positions
+	ADDEQ a4, #1			; Increment hit count
+	CMP a4, #2
+	BEQ is_enemy_fatal
+
+	MOV a4, #0
+	LDR v8, =PUMP_SPRITE
+		; Check if X Positions are equal
+	LDR ip, [v8, #Y_POS]		; Load its X POSITION
+	CMP ip, a2			; Compare the X positions
+	MOVEQ a4, #1			; Increment hit count
+
+	; Check if Y Positions are equal
+	LDR ip, [v8, #X_POS]		; Load its Y POSITION
+	CMP ip, a3			; Compare the Y positions
+	ADDEQ a4, #1			; Increment hit count
+	CMP a4, #2
+	BEQ is_enemy_fatal
+
+	; Check if Y Positions are equal
+	LDR ip, [v8, #OLD_X_POS]		; Load its Y POSITION
 	CMP ip, a3			; Compare the Y positions
 	ADDEQ a4, #1			; Increment hit count
 	CMP a4, #2
@@ -1029,14 +1061,47 @@ is_enemy_fatal			; Handle fatal collisions
 	BAL collision_end
 is_enemy_sand_wall
 	; First backtrack its movements by setting current position to old position
-	LDR ip, [v1, #OLD_X_POS]
-	STR ip, [v1, #X_POS]
-	LDR ip, [v1, #OLD_Y_POS]
-	STR ip, [v1, #Y_POS]
+	LDR v2, [v1, #OLD_X_POS]
+	STR v2, [v1, #X_POS]
+	LDR v3, [v1, #OLD_Y_POS]
+	STR v3, [v1, #Y_POS]
 
+	; check if up is free
+;	SUB a2, v3, #1
+;	MOV a1, v2
+;	BL get_sand_at_xy
+;	CMP a1, #0
+;	MOVEQ a1, #DIR_UP
+;	BEQ is_enemy_end_collision
+ ;
+;	; check if down is free
+;	ADD a2, v3, #1
+;	MOV a1, v2
+;	BL get_sand_at_xy
+;	CMP a1, #0
+;	MOVEQ a1, #DIR_DOWN
+;	BEQ is_enemy_end_collision
+ ;
+;	; check if left is free
+;	SUB a1, v2, #1
+;	MOV a2, v3
+;	BL get_sand_at_xy
+;	CMP a1, #0
+;	MOVEQ a1, #DIR_LEFT
+;	BEQ is_enemy_end_collision
+ ;
+	; check if up is free
+;	ADD a1, v2, #1
+;	MOV a2, v3
+;	BL get_sand_at_xy
+;	CMP a1, #0
+;	MOVEQ a1, #DIR_RIGHT
+;	BEQ is_enemy_end_collision
+ ;
 	; Then set him off on a random direction (coz we dont care about the bad guy)
 	MOV a1, #2		; 2 bit rand (0-3) = new direction
 	BL get_nbit_rand
+is_enemy_end_collision
 	STR a1, [v1, #DIRECTION]
 
 	BAL collision_end
@@ -1044,20 +1109,80 @@ is_enemy_sand_wall
 is_pump_check
 ; Sprite is pump. Only significant collision is with wall or sand
 ; 1. Check for fatal collisions
+;	MOV a4, #0
+;	LDR v8, =FYGAR_SPRITE_1
+;		; Check if X Positions are equal
+;	LDR ip, [v8, #X_POS]		; Load its X POSITION
+;	CMP ip, a2			; Compare the X positions
+;	MOVEQ a4, #1			; Increment hit count
+ ;
+;	; Check if Y Positions are equal
+;	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
+;	CMP ip, a3			; Compare the Y positions
+;	ADDEQ a4, #1			; Increment hit count
+;	CMP a4, #2
+;	MOV ip, v1
+;	MOV v1, v8
+;	BLEQ kill_sprite
+;	MOV v1, ip
+;	BEQ is_pump_fatal
+ ;
+;	MOV a4, #0
+;	LDR v8, =POOKA_SPRITE_1
+;		; Check if X Positions are equal
+;	LDR ip, [v8, #X_POS]		; Load its X POSITION
+;	CMP ip, a2			; Compare the X positions
+;	MOVEQ a4, #1			; Increment hit count
+ ;
+;	; Check if Y Positions are equal
+;	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
+;	CMP ip, a3			; Compare the Y positions
+;	ADDEQ a4, #1			; Increment hit count
+;	CMP a4, #2
+;	MOV ip, v1
+;	MOV v1, v8
+;	BLEQ kill_sprite
+;	MOV v1, ip
+;	BEQ is_pump_fatal
+ ;
+;	MOV a4, #0
+;	LDR v8, =POOKA_SPRITE_2
+;		; Check if X Positions are equal
+;	LDR ip, [v8, #X_POS]		; Load its X POSITION
+;	CMP ip, a2			; Compare the X positions
+;	MOVEQ a4, #1			; Increment hit count
+;	LDRNE ip, [v8, #OLD_X_POS]		; Load its X POSITION
+;	CMPNE ip, a2			; Compare the X positions
+;	MOVEQ a4, #1			; Increment hit count
+ ;
+;	; Check if Y Positions are equal
+;	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
+;	CMP ip, a3			; Compare the Y positions
+;	ADDEQ a4, #1			; Increment hit count
+;	LDR ip, [v8, #OLD_Y_POS]		; Load its Y POSITION
+;	CMP ip, a3			; Compare the Y positions
+;	ADDEQ a4, #1			; Increment hit count
+;	CMP a4, #2
+;	MOV ip, v1
+;	MOV v1, v8
+;	BLGE kill_sprite
+;	MOV v1, ip
+;	BGE is_pump_fatal
+
 ; 2. Check for wall collision
 	CMP a2, #0	; check
 	MOVLT a1, #2
-	BLT is_pump_fatal	; end if x < 0
+	BLE is_pump_nokill	; end if x < 0
 	CMP a2, #18 ; check
-	MOVGT a1, #2
-	BGT is_pump_fatal	; end if x > 18
+	MOVGE a1, #2
+	BGT is_pump_nokill	; end if x > 18
 
 	CMP a3, #0	; check
 	MOVLT a1, #2
-	BLT is_pump_fatal	; end if y < 0
+	BLT is_pump_nokill	; end if y < 0
 	CMP a3, #14 ; check
 	MOVGT a1, #2
-	BGT is_pump_fatal	; end if y > 14
+	BGT is_pump_nokill	; end if y > 14
 
 ; 3. check for sand collision
 	MOV a1, a2			; Move x into a1
@@ -1069,8 +1194,19 @@ is_pump_check
 	BAL collision_end
 is_pump_fatal
 	LDR v1, =PUMP_SPRITE
-	MOV ip, #0
-	STR ip, [v1]
+	LDR ip, [v1, #OLD_X_POS]
+	STR ip, [v1, #X_POS]
+	LDR ip, [v1, #OLD_Y_POS]
+	STR ip, [v1, #Y_POS]
+	BL kill_sprite
+	BAL collision_end
+is_pump_nokill
+	LDR v1, =PUMP_SPRITE
+	LDR ip, [v1, #OLD_X_POS]
+	STR ip, [v1, #X_POS]
+	LDR ip, [v1, #OLD_Y_POS]
+	STR ip, [v1, #Y_POS]
+	BL kill_sprite
 collision_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
@@ -1142,19 +1278,23 @@ spawn_bullet
 	LDR a2, [v1, #Y_POS]
 	LDR a3, [v1, #DIRECTION]
 
-	CMP a3, #DIR_UP
-	SUBEQ a2, a2, #1
+;	CMP a3, #DIR_UP
+;	SUBEQ a2, a2, #1
 
-	CMP a3, #DIR_DOWN
-	ADDEQ a2, a2, #1
+;	CMP a3, #DIR_DOWN
+;	ADDEQ a2, a2, #1
 
-	CMP a3, #DIR_LEFT
-	SUBEQ a1, a1, #1
+;	CMP a3, #DIR_LEFT
+;	SUBEQ a1, a1, #1
 
-	CMP a3, #DIR_RIGHT
-	ADDEQ a1, a1, #1
+;	CMP a3, #DIR_RIGHT
+;	ADDEQ a1, a1, #1
 
 	LDR v1, =PUMP_SPRITE
+	LDR ip, [v1, #LIVES]
+	CMP ip,	#0
+	BGT	bullet_spawn_end
+
 	STR a1, [v1, #X_POS]
 	STR a1, [v1, #OLD_X_POS]
 	STR a2, [v1, #Y_POS]
@@ -1162,7 +1302,7 @@ spawn_bullet
 	MOV a1, #1
 	STR a1, [v1, #LIVES]
 	STR a3, [v1, #DIRECTION] 
-	
+bullet_spawn_end	
 	LDMFD sp!, {lr, v1}
 	BX lr
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1225,6 +1365,9 @@ end_pump_update
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 handle_and_detect_all
 	STMFD sp!, {lr, v1}
+	LDR v1, =PUMP_SPRITE
+	MOV a1, #3
+	BL detect_sprite_collision
 	LDR v1, =FYGAR_SPRITE_1
 	MOV a1,	#2
 	BL detect_sprite_collision
@@ -1233,9 +1376,6 @@ handle_and_detect_all
 	BL detect_sprite_collision
 	LDR v1, =POOKA_SPRITE_2
 	MOV a1,	#1
-	BL detect_sprite_collision
-	LDR v1, =PUMP_SPRITE
-	MOV a1, #3
 	BL detect_sprite_collision
 	LDR v1, =DUG_SPRITE
 	MOV a1,	#0
@@ -1272,18 +1412,18 @@ toggle_pause_game
 ;;;;;;;;;;;;;;;;
 kill_sprite
 	; v1 = sprite to kill
-	STMFD sp!, {lr, v1}
+	STMFD sp!, {lr, v1,v2}
 	
-	LDR ip, [v1, #LIVES]
-	SUB ip, ip, #1
-	STR ip, [v1, #LIVES]
-	CMP ip, #0
-	BLEQ clear_sprite
-	MOVEQ ip, #100
-	STREQ ip, [v1, #X_POS]
-	STREQ ip, [v1, #Y_POS]
+	LDR v2, [v1, #LIVES]
+	SUB v2, v2, #1
+	STR v2, [v1, #LIVES]
+	BL clear_sprite
+	CMP v2, #0
+	MOVEQ v2, #100
+	STREQ v2, [v1, #X_POS]
+	STREQ v2, [v1, #Y_POS]
 
-	LDMFD sp!, {lr, v1}
+	LDMFD sp!, {lr, v1, v2}
 	BX lr
 
 
