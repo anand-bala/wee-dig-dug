@@ -121,14 +121,14 @@ POOKA_SPRITE_2		; State of 2nd Pooka sprite
 	DCD 7			; Original Y
 
 PUMP_SPRITE		; State of the Pump sprite
-	DCD 9			; x position
-	DCD 7			; y position
-	DCD 4			; lives
+	DCD 100			; x position
+	DCD 100			; y position
+	DCD 0			; lives
 	DCD DIR_LEFT	   	; direction
-	DCD 8			; Old X
-	DCD 7			; Old Y
-	DCD 9			; Original X
-	DCD 7			; Original Y
+	DCD 100			; Old X
+	DCD 100			; Old Y
+	DCD 100			; Original X
+	DCD 100			; Original Y
 
 
 HIGH_SCORE	DCD 0
@@ -362,8 +362,7 @@ reset_board_loop
 
 ; Make sure bullet is "dead", just set lives to 0.
 	LDR v1, =PUMP_SPRITE
-	MOV a1, #0
-	STR a1, [v1, #LIVES]
+	BL kill_sprite
 ; Now update the GUI
 
 	BL draw_empty_board
@@ -936,17 +935,17 @@ is_dug_check
 ; 2. check for wall collision
 	CMP a2, #0	; check
 	MOVLT a1, #2
-	BLT collision_end	; end if x < 0
+	BLT is_dug_wall	; end if x < 0
 	CMP a2, #18 ; check
 	MOVGT a1, #2
-	BGT collision_end	; end if x > 18
+	BGT is_dug_wall	; end if x > 18
 
 	CMP a3, #0	; check
 	MOVLT a1, #2
-	BLT collision_end	; end if y < 0
+	BLT is_dug_wall	; end if y < 0
 	CMP a3, #14 ; check
 	MOVGT a1, #2
-	BGT collision_end	; end if y > 14
+	BGT is_dug_wall	; end if y > 14
 
 ; 3. check for sand collision
 ; Check for sand on board model at xy, and if collision, increment score
@@ -982,7 +981,13 @@ is_dug_sand
 	BL clear_at_x_y
 
 	BAL collision_end
+is_dug_wall
+	LDR v2, [v1, #OLD_X_POS]
+	STR v2, [v1, #X_POS]
+	LDR v3, [v1, #OLD_Y_POS]
+	STR v3, [v1, #Y_POS]
 
+	BAL collision_end
 is_pooka_check
 is_fygar_check
 ; Sprite is either Pooka or Fygar. Treat them same. #EQUALITY
@@ -1032,17 +1037,13 @@ is_fygar_check
 	MOV a4, #0
 ; 2. Check for wall collision
 	CMP a2, #0	; check
-	MOVLE a1, #2
 	BLT is_enemy_sand_wall	; end if x < 0
 	CMP a2, #18 ; check
-	MOVGE a1, #2
 	BGT is_enemy_sand_wall	; end if x > 18
 
 	CMP a3, #0	; check
-	MOVLE a1, #2
 	BLT is_enemy_sand_wall	; end if y < 0
 	CMP a3, #14 ; check
-	MOVGE a1, #2
 	BGT is_enemy_sand_wall	; end if y > 14
 
 ; 3. check for sand collision
@@ -1056,6 +1057,11 @@ is_fygar_check
 	BAL collision_end
 
 is_enemy_fatal			; Handle fatal collisions
+	LDR ip, =FYGAR_SPRITE_1
+	CMP ip, v1		; check if current sprite if FYGAR
+	MOVEQ a1, #2
+	MOVNE a1, #1
+	BL modify_score
 	BL kill_sprite
 	LDR v1, =PUMP_SPRITE
 	BL kill_sprite
@@ -1116,7 +1122,7 @@ is_pump_check
 ;	LDR ip, [v8, #X_POS]		; Load its X POSITION
 ;	CMP ip, a2			; Compare the X positions
 ;	MOVEQ a4, #1			; Increment hit count
- ;
+;;
 ;	; Check if Y Positions are equal
 ;	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 ;	CMP ip, a3			; Compare the Y positions
@@ -1127,14 +1133,14 @@ is_pump_check
 ;	BLEQ kill_sprite
 ;	MOV v1, ip
 ;	BEQ is_pump_fatal
- ;
+ ;;
 ;	MOV a4, #0
 ;	LDR v8, =POOKA_SPRITE_1
 ;		; Check if X Positions are equal
 ;	LDR ip, [v8, #X_POS]		; Load its X POSITION
 ;	CMP ip, a2			; Compare the X positions
 ;	MOVEQ a4, #1			; Increment hit count
- ;
+;;
 ;	; Check if Y Positions are equal
 ;	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 ;	CMP ip, a3			; Compare the Y positions
@@ -1155,7 +1161,7 @@ is_pump_check
 ;	LDRNE ip, [v8, #OLD_X_POS]		; Load its X POSITION
 ;	CMPNE ip, a2			; Compare the X positions
 ;	MOVEQ a4, #1			; Increment hit count
- ;
+;
 ;	; Check if Y Positions are equal
 ;	LDR ip, [v8, #Y_POS]		; Load its Y POSITION
 ;	CMP ip, a3			; Compare the Y positions
@@ -1417,6 +1423,8 @@ kill_sprite
 	
 	LDR v2, [v1, #LIVES]
 	SUB v2, v2, #1
+	CMP v2, #0
+	MOVLE v2, #0
 	STR v2, [v1, #LIVES]
 	BL clear_sprite
 	CMP v2, #0
@@ -1427,5 +1435,29 @@ kill_sprite
 	LDMFD sp!, {lr, v1, v2}
 	BX lr
 
+; input:	a1 	-> 0 = 10 points
+;				-> 1 = 50 points
+;				-> 2 = 100 points
+modify_score
+	STMFD sp!, {lr, v1}
 
+	LDR v1, =CURRENT_SCORE
+	LDR ip, [v1]
+	CMP a1, #0
+	ADDEQ ip, ip, #10
+	CMP a1, #1
+	ADDEQ ip, ip, #50
+	CMP a1, #2
+	ADDEQ ip, ip, #100
+	
+	STR ip, [v1]
+	LDR v1, =HIGH_SCORE
+	LDR a1, [v1]
+	CMP a1, ip
+	MOVLT a1, ip
+
+	STR a1, [v1]
+
+	LDMFD sp!, {lr, v1}
+	BX lr
 	END

@@ -82,6 +82,12 @@ POOKA_GUI
 SAND_GUI
 	DCB	"#"
 
+TIME_str	= 27,"[6;25fTIME: "
+TIME_val	= "000",10,13,0
+
+LEVEL_str	= 27,"[7;25fLEVEL:"
+LEVEL_val	= "000",10,13,0
+
 BOARD_GUI
 	DCB "ZZZZZZZZZZZZZZZZZZZZZ",13,10
 	DCB "Z                   Z",13,10
@@ -101,16 +107,16 @@ BOARD_GUI
 	DCB "Z                   Z",13,10
 	DCB "ZZZZZZZZZZZZZZZZZZZZZ",13,10,0
 
-HIGH_SCORE_str	=	27,"[19;0fHIGH SCORE: "
+HIGH_SCORE_str	=	27,"[20;0fHIGH SCORE: "
 HIGH_SCORE_val	=	"000000",10,13,0
 
-CURRENT_SCORE_str	=	27,"[18;6fSCORE: "
+CURRENT_SCORE_str	=	27,"[19;6fSCORE: "
 CURRENT_SCORE_val	=	"000000",10,13,0
 
-DEBUG1_str	=	27,"[20;0fDEBUG1: "
+DEBUG1_str	=	27,"[21;0fDEBUG1: "
 DEBUG1_val	=	"000000",10,13,0
 
-DEBUG2_str	=	27,"[20;0fDEBUG2: "
+DEBUG2_str	=	27,"[22;0fDEBUG2: "
 DEBUG2_val1	=	"000000, "
 DEBUG2_val2	=	"000000",10,13,0
 
@@ -154,6 +160,10 @@ draw_empty_board
 	LDR v1, =CURRENT_SCORE_str
 	BL output_string
 	LDR v1, =HIGH_SCORE_str
+	BL output_string
+	LDR v1, =TIME_str
+	BL output_string
+	LDR v1, =LEVEL_str
 	BL output_string
 
 	LDMFD sp!, {lr, v1-v8}
@@ -376,10 +386,10 @@ draw_sprite_end
 clear_sprite
 	STMFD sp!, {lr, v1}
 	; v1 = sprite to clear
-	LDR a1, [v1, #X_POS]
-	LDR a2, [v1, #Y_POS]
-	MOV a3, #' '
-	BL draw_char_at_xy
+	;LDR a1, [v1, #X_POS]
+	;LDR a2, [v1, #Y_POS]
+	;MOV a3, #' '
+	;BL draw_char_at_xy
 
 	LDR a1, [v1, #OLD_X_POS]
 	LDR a2, [v1, #OLD_Y_POS]
