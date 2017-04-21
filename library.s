@@ -6,7 +6,9 @@
 	EXPORT	interrupt_disable
 	EXPORT	read_timer0
 	EXPORT	set_match0
+	EXPORT	get_match0
 	EXPORT	set_match1
+	EXPORT	get_match1
 	EXPORT	set_match2
 	EXPORT	set_match3
 	EXPORT	reset_timer0
@@ -29,6 +31,7 @@
 	EXPORT	num_to_dec_str
 		
 	EXPORT	get_nbit_rand
+	EXPORT	div_and_mod
 
 	EXPORT	U0IER	
 	EXPORT	U0IIR
@@ -306,6 +309,15 @@ set_match0
 	LDMFD sp!, {lr, v1}
 	BX lr
 
+get_match0
+	STMFD SP!,{lr, v1}	; Store register lr on stack
+	
+	LDR v1, =TIMER0		; Load TIMER0 Base address
+	LDR a1, [v1, #T_MR0]	; set MR0
+
+	LDMFD sp!, {lr, v1}
+	BX lr
+
 ; Set match register 1
 ; input:	a1	=	Timer match value
 ;			a2	=	Reset
@@ -322,6 +334,15 @@ set_match1
 	LSL a1, a1, #3			; Set Bit 3 = 1 for interrupt
 	ORR a1, a1, a2, LSL #4	; Set bit 4 = x for reset
 	STR a1, [v1, #T_MCR]
+
+	LDMFD sp!, {lr, v1}
+	BX lr
+
+get_match1
+	STMFD SP!,{lr, v1}	; Store register lr on stack
+	
+	LDR v1, =TIMER0		; Load TIMER0 Base address
+	LDR a1, [v1, #T_MR1]	; set MR0
 
 	LDMFD sp!, {lr, v1}
 	BX lr

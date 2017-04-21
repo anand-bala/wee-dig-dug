@@ -42,6 +42,7 @@
 	EXPORT	just_fygar_update
 	EXPORT	toggle_pause_game
 	EXPORT	init_model
+	EXPORT	handle_and_detect_all
 
 	IMPORT Game_over_gui
 	IMPORT	get_nbit_rand
@@ -135,6 +136,7 @@ HIGH_SCORE	DCD 0
 LEVEL		DCD 1
 CURRENT_SCORE	DCD 0
 CURRENT_TIME	DCD 0
+NUMBER_OF_ENEMIES	DCD 3
 
 
 GAME_BOARD	FILL BOARD_SIZE, 0x00, 1	; Define a 2560 byte array with 1 byte 1s signifying sand
@@ -235,6 +237,8 @@ reset_board_loop
 	; set random Y in range [0-14]	 (4 bit)
 	MOV a1, #4
 	BL get_nbit_rand
+	CMP a1, #2
+	MOVLT a1, #2
 	CMP a1, #15
 	MOVGE a1, #14
 	STR a1, [v1, #Y_POS]		; update Y pos
@@ -245,19 +249,25 @@ reset_board_loop
 	; set random X in range [0-18]	(5 bit with check)
 	MOV a1, #5
 	BL get_nbit_rand
-	CMP a1, #19
-	MOVGE a1, #18
+	CMP a1, #2
+	MOVLT a1, #3
+	CMP a1, #15
+	MOVGT a1, #15
 	STR a1, [v1, #X_POS]		; update X pos
 	STR a1, [v1, #OLD_X_POS]	; update old X pos
 	STR a1, [v1, #ORIGINAL_X]	; set original X
 
 		
-	; Clear sand for Fygar1 movement  (x-1,y) (x,y) (x+1,y)
+	; Clear sand for Fygar1 movement  
+	;	(x-2,y)	(x-1,y)	(x,y)	(x+1,y)	(x+2,y)
 
 	; clear_at_x_y changes a1 and a2. Hence, saving x and y in v2, v3
 	MOV v2, a1	; temporarily hold x
 	MOV v3, a2	; temporarily hold y 
-	
+
+	SUB a1, v2, #2	; x-2
+	MOV	a2, v3		; y
+	BL clear_at_x_y
 	SUB a1, v2, #1	; x-1
 	MOV	a2, v3		; y
 	BL clear_at_x_y
@@ -265,6 +275,9 @@ reset_board_loop
 	MOV	a2, v3	   	; y
 	BL clear_at_x_y
 	ADD a1, v2, #1	; x+1
+	MOV	a2, v3	   	; y
+	BL clear_at_x_y
+	ADD a1, v2, #2	; x+2
 	MOV	a2, v3	   	; y
 	BL clear_at_x_y
 
@@ -360,17 +373,19 @@ reset_board_loop
 	MOV	a2, v3	   	; y
 	BL clear_at_x_y
 
+; Set number of enemies to 3
+	LDR v1, =NUMBER_OF_ENEMIES
+	MOV ip, #3
+	STR ip, [v1]
+
 ; Make sure bullet is "dead", just set lives to 0.
 	LDR v1, =PUMP_SPRITE
 	BL kill_sprite
+
 ; Now update the GUI
 
 	BL draw_empty_board
 	BL populate_board
-
-	LDR v1, =RUNNING_P
-	MOV a1, #1
-	STRB a1, [v1]
 
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
@@ -970,10 +985,8 @@ is_dug_fatal			; Handle fatal collisions
 	BLGT respawn_game_sprites
 	BAL collision_end
 is_dug_sand
-	LDR v8, =CURRENT_SCORE
-	LDR a1, [v8]
-	ADD a1, a1, #10
-	STR a1, [v8]
+	MOV a1, #0
+	BL modify_score
 	
 	LDR v1, =DUG_SPRITE
 	LDR a1, [v1, #X_POS]
@@ -1065,6 +1078,11 @@ is_enemy_fatal			; Handle fatal collisions
 	BL kill_sprite
 	LDR v1, =PUMP_SPRITE
 	BL kill_sprite
+	LDR v1, =NUMBER_OF_ENEMIES
+	LDR a1, [v1]
+	SUBS a1, a1, #1
+	STR a1, [v1]
+	BLEQ level_up_dug
 	BAL collision_end
 is_enemy_sand_wall
 	; First backtrack its movements by setting current position to old position
@@ -1457,6 +1475,21 @@ modify_score
 	MOVLT a1, ip
 
 	STR a1, [v1]
+
+	LDMFD sp!, {lr, v1}
+	BX lr
+
+level_up_dug
+	STMFD sp!, {lr, v1}
+
+	LDR v1, =LEVEL
+	LDR ip, [v1]
+	ADD ip, ip, #1
+	STR ip, [v1]
+
+
+
+	BL reset_model
 
 	LDMFD sp!, {lr, v1}
 	BX lr

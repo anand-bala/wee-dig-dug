@@ -13,6 +13,8 @@
 	IMPORT	set_match1
 	IMPORT	set_match2
 	IMPORT	set_match3
+	IMPORT	get_match0
+	IMPORT	get_match1
 	IMPORT	reset_timer0
 
 	IMPORT	clear_7_seg
@@ -21,7 +23,6 @@
 	IMPORT	output_character
 	IMPORT	read_character
 	IMPORT	num_to_dec_str
-
 	IMPORT	get_nbit_rand
 
 	IMPORT	U0IER
@@ -45,6 +46,7 @@
 	IMPORT	just_fygar_update
 	IMPORT	toggle_pause_game
 	IMPORT	init_model
+	IMPORT	handle_and_detect_all
 
 	IMPORT	DUG_SPRITE
 	IMPORT	FYGAR_SPRITE_1
@@ -69,10 +71,16 @@
 	IMPORT	DIR_LEFT
 	IMPORT	DIR_RIGHT
 
+	EXPORT	ONE_SEC	
+	EXPORT	HALF_SEC	
+	EXPORT	TIMER_100ms	
+	EXPORT	TIME_120s
+
 	IMPORT GAME_BEGIN_GUI
 
 	EXPORT	RUN_P
 
+ONE_SEC		EQU 0x1194000
 HALF_SEC	EQU	0x08CA000
 TIMER_100ms	EQU	0x1C2000
 TIME_120s	EQU	0x83D60000
@@ -97,10 +105,6 @@ Game_begin_gui
 	
 	BL timer_init
 	BL read_character
-  ;the following 3 lines are redundant
-;	LDR v1, =begin_str
-;	BL output_string
-;	BL read_character
 
    	BL interrupt_init
 	BL init_model
@@ -117,6 +121,10 @@ Game_begin_gui
 	;BL set_match0
 
 	BL reset_timer0
+	
+	LDR v1, =RUNNING_P
+	MOV a1, #1
+	STRB a1, [v1]
 
 	LDR v1, =EXIT_P
 game_loop
@@ -128,8 +136,30 @@ game_loop
 
 FIQ_Handler
 		STMFD SP!, {r0-r12, lr}  	; Save registers r0-r12, lr
+MR0_Interrupt
+		LDR r0, =0xE0004000
+		LDR r1, [r0]
+		TST r1, #0x1	
+		BEQ MR1_Interrupt
 
-TIMER0_Interrupt
+		STMFD SP!, {r0-r12, lr}   	; Save registers r0-r12, lr
+		; MR1 interrupt
+
+		LDR v1, =RUNNING_P
+		LDRB ip, [v1]
+		CMP ip, #0
+		BEQ MR1_end
+		BL just_fygar_update
+		BL just_update_bullet
+		BL handle_and_detect_all
+		BL update_board
+MR0_end
+		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
+
+		ORR r1, r1, #1		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #1
+		STR r1, [r0]	   	; store clear value (r1) into 0xE0004000 (r0)
+
+MR1_Interrupt
 		LDR r0, =0xE0004000
 		LDR r1, [r0]
 		TST r1, #0x2	; test MR1 TODO: TEST MR0
@@ -141,9 +171,14 @@ TIMER0_Interrupt
 		LDR v1, =RUNNING_P
 		LDRB ip, [v1]
 		CMP ip, #0
-		BEQ TIMER0_end
+		BEQ MR1_end
 		BL update_model
-TIMER0_end
+MR1_end
+		LDR v1, =CURRENT_TIME
+		LDR ip, [v1]
+		BL get_match1
+		ADD a1, a1, ip
+
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
 
 		ORR r1, r1, #2		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #2
