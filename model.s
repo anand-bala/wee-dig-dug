@@ -16,7 +16,13 @@
 	EXPORT	GAME_BOARD
 	EXPORT	HIGH_SCORE
 	EXPORT	LEVEL
-	EXPORT	CURRENT_SCORE											 
+	EXPORT	CURRENT_SCORE
+
+	EXPORT	BEGIN_GAME
+	EXPORT	PAUSE_GAME
+	EXPORT	GAME_OVER
+	EXPORT	RUNNING_P
+ 
 	
 	EXPORT	DUG_SPRITE
 	EXPORT	FYGAR_SPRITE_1
@@ -124,10 +130,14 @@ PUMP_SPRITE		; State of the Pump sprite
 HIGH_SCORE	DCD 0
 LEVEL		DCD 1
 CURRENT_SCORE	DCD 0
+CURRENT_TIME	DCD 0
+
 
 GAME_BOARD	FILL BOARD_SIZE, 0x00, 1	; Define a 2560 byte array with 1 byte 1s signifying sand
-	ALIGN
 BEGIN_GAME	= 0,0	; Boolean to start game
+PAUSE_GAME	= 0,0	; Boolean to pause game
+GAME_OVER	= 0,0	; Boolean for game over
+RUNNING_P	= 0,0	; Boolean to seee if game is running
 	ALIGN
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -142,6 +152,22 @@ DIR_TO_MOVE_DUG	DCD	DIR_LEFT
 ;	SUBROUTINES		;
 ;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;
+; INIT MODEL ;
+;;;;;;;;;;;;;;
+
+init_model
+	STMFD sp!, {lr, v1-v8}
+	MOV a1, #0
+	LDR v1, =CURRENT_SCORE
+	STR a1, [v1]
+	LDR v1, =LEVEL
+	MOV a1, #1
+	STR a1, [v1]
+	BL reset_model
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
+	
 
 ;;;;;;;;;;;;;;;
 ; RESET MODEL :
@@ -334,21 +360,41 @@ reset_board_loop
 	LDR v1, =PUMP_SPRITE
 	MOV a1, #0
 	STR a1, [v1, #LIVES]
-
-
-; Set current score to 0
-
-	MOV a1, #0
-	LDR v1, =CURRENT_SCORE
-	STR a1, [v1]
-
 ; Now update the GUI
 
 	BL draw_empty_board
 	BL populate_board
 
+	LDR v1, =RUNNING_P
+	MOV a1, #1
+	STRB a1, [v1]
+
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Game over
+;
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+model_game_over
+	STMFD sp!, {lr, v1-v8}
+
+	LDR v1, =RUNNING_P
+	MOV ip, #0
+	STRB ip, [v1]
+
+	LDR v1, =GAME_OVER
+	MOV ip, #1
+	STRB ip, [v1]
+
+	; TODO: GUI Update
+	; TODO: Peripheral Update
+
+	LDMFD sp!, {lr, v1-v8}
+	BX lr
+
+
 
 ;---------------------reset model--------------------------------------;
 
@@ -448,6 +494,11 @@ respawn_end
 ; NOTE: Order was not chosen arbitarily
 update_model
 	STMFD sp!, {lr, v1-v8}
+
+	LDR v1, =RUNNING_P
+	LDRB ip, [v1]
+	CMP ip, #0
+	BEQ end_model_update
 
 ; 1. Move the enemy sprites
 ; -- 1.1 Move FYGAR1
@@ -634,6 +685,8 @@ update_dug
 
 ; Detect and handle collisions
 	BL handle_and_detect_all
+
+end_model_update
 ; Trigger GUI updates
 	BL update_board
 ; TODO: Trigger peripheral updates
@@ -902,7 +955,9 @@ is_dug_fatal			; Handle fatal collisions
 	LDR a1, [v1, #LIVES]
 	SUB a1, a1, #1
 	STR a1, [v1, #LIVES]
-	BL respawn_game_sprites
+	CMP a1, #0
+	BLEQ model_game_over
+	BLGT respawn_game_sprites
 	BAL collision_end
 is_dug_sand
 	LDR v8, =CURRENT_SCORE
@@ -1019,6 +1074,12 @@ collision_end
 
 just_fygar_update
 	STMFD sp!, {lr, v1}
+
+	LDR v1, =RUNNING_P
+	LDRB ip, [v1]
+	CMP ip, #0
+	BEQ end_fygar_update
+	
 	; Load FYGAR 1
 	LDR v1, =FYGAR_SPRITE_1
 	; Get current stats
@@ -1057,7 +1118,7 @@ just_fygar_update
 
 finish_fygar_update
 	BL update_sprite	; update fygar sprite
-
+end_fygar_update
 	MOV a1,	#2
 	LDMFD sp!, {lr, v1}
 	BX lr
@@ -1101,6 +1162,12 @@ spawn_bullet
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 just_update_bullet
 	STMFD sp!, {lr, v1}
+
+	LDR v1, =RUNNING_P
+	LDRB ip, [v1]
+	CMP ip, #0
+	BEQ end_pump_update
+
 	; Load BULLET
 	LDR v1, =PUMP_SPRITE
 	; Get current stats
@@ -1139,7 +1206,7 @@ just_update_bullet
 
 finish_pump_update
 	BL update_sprite	; update Bullet sprite
-
+end_pump_update
 	MOV a1,	#2
 	LDMFD sp!, {lr, v1}
 	BX lr	
@@ -1168,4 +1235,31 @@ handle_and_detect_all
 
 	LDMFD sp!, {lr, v1}
 	BX lr
+	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; manipulate game states
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+toggle_pause_game
+	STMFD sp!, {lr, v1}
+
+	LDR v1, =PAUSE_GAME
+	LDRB ip, [v1]
+	CMP ip, #0
+	MOVEQ ip, #1	; pause
+	MOVEQ a1, #0	; not runnoing
+	MOVNE ip, #0	; not paused
+	MOVNE a1, #1	; running
+	STRB ip, [v1]
+
+	LDR v1, =RUNNING_P
+	STRB a1, [v1]
+
+	; TODO: trigger gui
+
+	STMFD sp!, {lr, v1}
+	BX lr
+
+
+
+
 	END
