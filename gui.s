@@ -40,6 +40,7 @@
 	EXPORT	update_board
 	EXPORT	draw_empty_board
 	EXPORT	populate_board
+	EXPORT	clear_sprite
 
 	; GUI Data (EXPORT to model)
 	EXPORT	PUMP_GUI
@@ -356,5 +357,25 @@ draw_sprite
 draw_sprite_end
 	LDMFD sp!, {lr, v1, v8}
 	BX lr
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+; CLEAR SPRITE
+;;;;;;;;;;;;;;;;;;;;;;;;
+clear_sprite
+	STMFD sp!, {lr, v1}
+	; v1 = sprite to clear
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	MOV a3, #' '
+	BL draw_char_at_xy
+
+	LDR a1, [v1, #OLD_X_POS]
+	LDR a2, [v1, #OLD_Y_POS]
+	MOV a3, #' '
+	BL draw_char_at_xy
+
+	LDMFD sp!, {lr, v1}
+	BX lr
+
 
 	END

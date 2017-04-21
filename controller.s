@@ -43,12 +43,20 @@
 	IMPORT	spawn_bullet
 	IMPORT	just_update_bullet
 	IMPORT	just_fygar_update
+	IMPORT	toggle_pause_game
+	IMPORT	init_model
 
 	IMPORT	DUG_SPRITE
 	IMPORT	FYGAR_SPRITE_1
 	IMPORT	POOKA_SPRITE_1
 	IMPORT	POOKA_SPRITE_2
 	IMPORT	PUMP_SPRITE
+	IMPORT	CURRENT_TIME
+
+	IMPORT	BEGIN_GAME
+	IMPORT	PAUSE_GAME
+	IMPORT	GAME_OVER
+	IMPORT	RUNNING_P
 
 	IMPORT	X_POS
 	IMPORT	Y_POS
@@ -61,9 +69,13 @@
 	IMPORT	DIR_LEFT
 	IMPORT	DIR_RIGHT
 
+	EXPORT	RUN_P
+
 HALF_SEC	EQU	0x08CA000
 TIMER_100ms	EQU	0x1C2000
+TIME_120s	EQU	0x83D60000
 
+begin_str	=	"Press any key to begin",12,13,0
 RUN_P		=	0,0
 EXIT_P		=	0,0
 UPDATE_P	=	0,0
@@ -73,19 +85,18 @@ weedigdug
 	STMFD sp!, {lr}
 	BL pin_connect_block_setup
 	BL uart_init
-	BL interrupt_init
-
-	MOV a1, #12
-	BL output_character
 
 ; Begin GAME
-	LDR v1, =EXIT_P
-	LDR v2, =RUN_P
 game_begin
-;	BL read_character
+	MOV a1, #12
+	BL output_character
+	LDR v1, =begin_str
+	BL output_string
+	BL read_character
 
+   	BL interrupt_init
 	BL timer_init
-	BL reset_model
+	BL init_model
 
 	; Set MR1 to half sec and reset it
 	LDR a1, =HALF_SEC
@@ -100,10 +111,7 @@ game_begin
 
 	BL reset_timer0
 
-	LDR v1, =RUN_P
-	MOV ip, #1
-	STRB ip, [v1]	; Raise runing flag 
-
+	LDR v1, =EXIT_P
 game_loop
 	LDRB a1, [v1]	; load exit_p
 	CMP a1, #0
@@ -125,7 +133,7 @@ TIMER0_Interrupt
 		STMFD SP!, {r0-r12, lr}   	; Save registers r0-r12, lr
 		; MR1 interrupt
 
-		LDR v1, =RUN_P
+		LDR v1, =RUNNING_P
 		LDRB ip, [v1]
 		CMP ip, #0
 		BEQ TIMER0_end
@@ -145,7 +153,7 @@ EINT1_interrupt	; Check for EINT1 interrupt
 		STMFD SP!, {r0-r12, lr}   	; Save registers r0-r12, lr
 
 		; Push button EINT1 Handling Code
-
+		BL toggle_pause_game
 EINT1_end
 
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
@@ -211,13 +219,10 @@ KEY_RIGHT
 		BAL	U0RDA_update
 
 ENTER_PRESS
-		LDR v1, =RUN_P
-		MOV a1, #0
-		STRB a1, [v1]	; Pull down RUNNING flag (PAUSE game)
 		BAL U0RDA_end
 SPACEBAR_PRESS
 		BL spawn_bullet
-		
+		BAL U0RDA_end
 U0RDA_update
 		BL queue_movement_DUG
 U0RDA_end
