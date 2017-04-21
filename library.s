@@ -237,7 +237,8 @@ pin_connect_block_setup
 	
 	LDR r0, =IO_1_DIR
 	LDR r1, [r0]
-	AND r1, r1, #IO1DIR_BTN 	; ANDing and setting 23:20 to 0
+; the following line is commented beceause we dont want to use our buttons alltogether
+;	AND r1, r1, #IO1DIR_BTN 	; ANDing and setting 23:20 to 0
 	ORR r1, r1, #IO1DIR_LED		; ORing and setting 19:16 to 1	
 	STR r1, [r0]
 	
