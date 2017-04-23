@@ -20,11 +20,17 @@
 	IMPORT	DIR_LEFT
 	IMPORT	DIR_RIGHT
 
+	IMPORT	ONE_SEC	
+	IMPORT	HALF_SEC	
+	IMPORT	TIMER_100ms	
+	IMPORT	TIME_120s
+
 	; Board data
 	IMPORT	GAME_BOARD
 	IMPORT	HIGH_SCORE
 	IMPORT	LEVEL
 	IMPORT	CURRENT_SCORE
+	IMPORT	CURRENT_TIME
 	
 	; Sprite Structures
 	IMPORT	DUG_SPRITE
@@ -37,6 +43,7 @@
 	IMPORT	num_to_dec_str
 	IMPORT	output_string
 	IMPORT	output_character
+	IMPORT	div_and_mod
 
 	; GUI routines (EXPORT)
 	EXPORT	update_board
@@ -87,6 +94,9 @@ TIME_val	= "000",10,13,0
 
 LEVEL_str	= 27,"[7;25fLEVEL:"
 LEVEL_val	= "000",10,13,0
+
+LIVES_str	= 27,"[8;25fLIVES:"
+LIVES_val	= "0",10,13,0
 
 BOARD_GUI
 	DCB "ZZZZZZZZZZZZZZZZZZZZZ",13,10
@@ -283,6 +293,44 @@ update_board
 	LDR v1, =CURRENT_SCORE_str
 	BL output_string
 
+	LDR v1, =HIGH_SCORE
+	LDR a1, [v1]
+	MOV a2, #6
+	LDR v1, =HIGH_SCORE_val
+	BL num_to_dec_str
+
+	LDR v1, =HIGH_SCORE_str
+	BL output_string
+; Show time and level
+	LDR v1, =LEVEL
+	LDR a1, [v1]
+	MOV a2, #3
+	LDR v1, =LEVEL_val
+	BL num_to_dec_str
+
+	LDR v1, =LEVEL_str
+	BL output_string
+
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #LIVES]
+	MOV a2, #1
+	LDR v1, =LIVES_val
+	BL num_to_dec_str
+
+	LDR v1, =LIVES_str
+	BL output_string
+
+	LDR v1, =CURRENT_TIME
+	LDR a1, [v1]
+	LDR a2, =ONE_SEC
+	BL div_and_mod
+	MOV a2, #3
+	LDR v1, =TIME_val
+	BL num_to_dec_str
+
+	LDR v1, =TIME_str
+	BL output_string
+	
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
