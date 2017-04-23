@@ -38,7 +38,7 @@ The **Model** maintains the internal representation of the board and triggers **
 
 The **Model** consists of an ___"array"___ (created using the `FILL` directive) of size $19 \times 15$ bytes, each byte representing a grain
 of sand.
-The **Model** also consists of `DCD` tables to hold information of sprites. These tables are structured similar to <tt>C</tt> `struct`s.
+The **Model** also consists of `DCD` tables to hold information of sprites. These tables are structured similar to **C `struct`s**.
 They look like this:
 
 ```
@@ -55,9 +55,12 @@ SPRITE
 
 ## Operations
 
-Operations that can be performed on the **Model** are:
+Operations that are defined by the **Model** are:
 
-* Update 
+* Update entire model.
+* Get if sand exists at given (x,y) coordinate on the board.
+* Handle and detect collisions
+* 
 
 
 
