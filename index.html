@@ -1,9 +1,32 @@
 <meta charset="utf-8">
 
 
-**Wee Dig Dug: Design**
+**Wee Dig Dug**
 
-# Overview
+__Created by__:
+[Anand Balakrishnan](https://anand-bala.github.io)
+and
+Amrit Pal Singh
+
+# User Guide
+
+Welcome to ___WeeDigDug___, a simplified text-based version of the popular arcade game **Dig Dug** by Namco!.
+The following project was written in ARM Assembly for the LPC2138 Education Board, with the ARM7TDMI architecture.
+
+## Setup
+
+Before playing the game, please make sure of the following:
+
+1. You are connected to the correct COM port on PuTTy, and at a baud rate of **115200 baud**.
+2. Resize the console window to a minimum of $30$ rows $\times$ $30$ columns.
+3. Just enjoy the game.
+
+To start playing, just flash the code onto the LPC2138 board.
+
+## Instructions
+
+
+# Design
 
 The game is designed similar to a **Model-View-Controller (MVC)** framework.
 This architecture is a common way of designing applications with a User Interface.
@@ -17,7 +40,7 @@ A **MVC** framework works in the following way:
 
 `TODO: Insert MVC image`
 
-# Controller (controller.s)
+## Controller (controller.s)
 
 The **Controller** mainly contains interrupt handlers, and it is also the entry point for the game.
 In is, we do the following:
@@ -28,12 +51,12 @@ In is, we do the following:
 
 The controller is a relatively small component, responsible mainly for updating the **Model** via subroutines exposed by the **Model**.
 
-# Model (model.s)
+## Model (model.s)
 
 The **Model** maintains the internal representation of the board and triggers **View** updates. It exposed routines that allows the
 **Controller** to trigger updates on the **Model**.
 
-## Implementation
+### Implementation
 
 The **Model** consists of an ___"array"___ (created using the `FILL` directive) of size $19 \times 15$ bytes, each byte representing a grain
 of sand.
@@ -56,7 +79,7 @@ SPRITE
 There are also staticaly defined regions of memory that keep track of the various states the game could possibly be in, for example, `PAUSE`, `GAME_OVER`.
 The **Model** is also responsible for keeping track of other variables of the game, such as, `LEVEL`, `HIGH_SCORE`, `CURRENT_SCORE` and `TIME`.
 
-## Operations
+### Operations
 
 Operations that are defined by the **Model** are:
 
@@ -70,14 +93,18 @@ Operations that are defined by the **Model** are:
 * Spawn sprites.
 
 
+## View (gui.s)
+
+# Developer Guide
 
 
 <!-- <link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/latex.css"> -->
+<!-- <link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/dark.css"> -->
 <!-- Markdeep: -->
 <style class="fallback">body{visibility:hidden}</style>
 <script>
 	window.markdeepOptions = {
-		tocStyle: 'long',
+		tocStyle: 'auto',
 		detectMath: true
 	}
 </script>
