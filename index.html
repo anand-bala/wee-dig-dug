@@ -1,4 +1,3 @@
-
 <meta charset="utf-8">
 
 
@@ -38,6 +37,7 @@ The **Model** maintains the internal representation of the board and triggers **
 
 The **Model** consists of an ___"array"___ (created using the `FILL` directive) of size $19 \times 15$ bytes, each byte representing a grain
 of sand.
+
 The **Model** also consists of `DCD` tables to hold information of sprites. These tables are structured similar to **C `struct`s**.
 They look like this:
 
@@ -53,16 +53,23 @@ SPRITE
 	DCD [0-14]	; Original Y position
 ```
 
+There are also staticaly defined regions of memory that keep track of the various states the game could possibly be in, for example, `PAUSE`, `GAME_OVER`.
+The **Model** is also responsible for keeping track of other variables of the game, such as, `LEVEL`, `HIGH_SCORE`, `CURRENT_SCORE` and `TIME`.
+
 ## Operations
 
 Operations that are defined by the **Model** are:
 
-* Update entire model.
+* Initialize and reset model.
+* Move sprites and update entire model.
+* Handle and detect collisions.
 * Get if sand exists at given (x,y) coordinate on the board.
-* Handle and detect collisions
-* 
+* Clear sand at given coordinate (x,y).
+* Toggle game states (`BEGIN_GAME`,`PAUSE`, `GAME_OVER`, `RUNNING`).
+* Update individual sprites.
+* Spawn sprites.
 
-
+## 
 
 
 
@@ -72,8 +79,7 @@ Operations that are defined by the **Model** are:
 <script>
 	window.markdeepOptions = {
 		tocStyle: 'long',
-		detectMath: true,
-		mode: 'html'
+		detectMath: true
 	}
 </script>
 <script src="https://casual-effects.com/markdeep/latest/markdeep.min.js?"></script>
