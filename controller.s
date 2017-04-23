@@ -77,6 +77,8 @@
 	EXPORT	TIME_120s
 
 	IMPORT GAME_BEGIN_GUI
+	
+	IMPORT set_level_disp
 
 	EXPORT	RUN_P
 
@@ -97,7 +99,7 @@ weedigdug
 	BL uart_init
 
 ; Begin GAME
-Game_begin_gui
+Game_begin_gui_start
 	MOV a1, #12
 	BL output_character
 	LDR v1, =GAME_BEGIN_GUI
@@ -106,7 +108,9 @@ Game_begin_gui
 	BL timer_init
 	BL read_character
 
-   	BL interrupt_init
+Game_begin_gui_end
+
+  BL interrupt_init
 	BL init_model
 
 	; Set MR1 to half sec and reset it

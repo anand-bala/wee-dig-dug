@@ -157,7 +157,7 @@
             <UseTargetDll>1</UseTargetDll>
             <UseExternalTool>0</UseExternalTool>
             <RunIndependent>0</RunIndependent>
-            <UpdateFlashBeforeDebugging>0</UpdateFlashBeforeDebugging>
+            <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
             <DriverSelection>4096</DriverSelection>
           </Flash1>
@@ -419,6 +419,11 @@
               <FileName>sprites.s</FileName>
               <FileType>2</FileType>
               <FilePath>..\sprites.s</FilePath>
+            </File>
+            <File>
+              <FileName>peripherals.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\peripherals.s</FilePath>
             </File>
           </Files>
         </Group>
