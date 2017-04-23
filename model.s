@@ -12,7 +12,6 @@
 	EXPORT	DIR_DOWN
 	EXPORT	DIR_LEFT
 	EXPORT	DIR_RIGHT
-	IMPORT update_peripherals
 	EXPORT	GAME_BOARD
 	EXPORT	HIGH_SCORE
 	EXPORT	LEVEL
@@ -51,6 +50,8 @@
 	IMPORT	populate_board
 	IMPORT	update_board
 	IMPORT	clear_sprite
+
+	IMPORT update_peripherals
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	CONSTANTS		;
