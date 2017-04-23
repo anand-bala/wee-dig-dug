@@ -8,10 +8,11 @@ __Created by__:
 and
 Amrit Pal Singh
 
-# User Guide
-
-Welcome to ___WeeDigDug___, a simplified text-based version of the popular arcade game **Dig Dug** by Namco!.
+Welcome to **Wee Dig Dug**, a simplified text-based version of the popular arcade game **Dig Dug** by Namco!.
 The following project was written in ARM Assembly for the LPC2138 Education Board, with the ARM7TDMI architecture.
+
+
+# User Guide
 
 ## Setup
 
@@ -24,6 +25,19 @@ Before playing the game, please make sure of the following:
 To start playing, just flash the code onto the LPC2138 board.
 
 ## Instructions
+
+You are the characte ___Dug___ and your job is to :
+
+1. Dig through as much of the sand as you can.
+2. Kill all enemies.
+3. **You must kill all the enemies withing 2 minutes to proceed to the next level**.
+
+You can move ___Dug___ using the `W,A,S,D` keys which correspond to `UP,DOWN,LEFT,RIGHT` respectively and
+shoot your bullet using `SPACEBAR`.
+You can use the 5th Push Button to `PAUSE` the game whenever you want.
+
+# Developer Guide
+
 
 
 # Design
@@ -95,7 +109,11 @@ Operations that are defined by the **Model** are:
 
 ## View (gui.s)
 
-# Developer Guide
+The **View** is responsible for rendering **Model** onto the GUI. It possessed routines that
+the **Model** uses to trigger updates to the GUI. This implementation was chosen as updates can
+be triggered as and when the **Model** is updates.
+
+### Implementation
 
 
 <!-- <link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/latex.css"> -->
@@ -104,8 +122,9 @@ Operations that are defined by the **Model** are:
 <style class="fallback">body{visibility:hidden}</style>
 <script>
 	window.markdeepOptions = {
-		tocStyle: 'auto',
-		detectMath: true
+		tocStyle: 'auto,
+		detectMath: true,
+		showURLs: true
 	}
 </script>
 <script src="https://casual-effects.com/markdeep/latest/markdeep.min.js?"></script>
