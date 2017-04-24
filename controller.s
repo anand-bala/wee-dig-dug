@@ -66,6 +66,7 @@
 	IMPORT	DIRECTION
 	IMPORT	OLD_X_POS
 	IMPORT	OLD_Y_POS
+	
 	IMPORT	DIR_UP
 	IMPORT	DIR_DOWN
 	IMPORT	DIR_LEFT
@@ -99,7 +100,7 @@ weedigdug
 	BL uart_init
 
 ; Begin GAME
-Game_begin_gui_start
+begin_game
 	MOV a1, #12
 	BL output_character
 	LDR v1, =GAME_BEGIN_GUI
@@ -107,8 +108,6 @@ Game_begin_gui_start
 	
 	BL timer_init
 	BL read_character
-
-Game_begin_gui_end
 
   BL interrupt_init
 	BL init_model
@@ -129,14 +128,38 @@ Game_begin_gui_end
 	LDR v1, =RUNNING_P
 	MOV a1, #1
 	STRB a1, [v1]
-
-	LDR v1, =EXIT_P
+game_run
+	LDR v1, =GAME_OVER
 game_loop
-	LDRB a1, [v1]	; load exit_p
+	LDRB a1, [v1]	; load GAME_OVER
 	CMP a1, #0
-	BEQ game_loop	; if exit_p = 0: loop
+	BEQ game_loop	; if GAME_OVER = 0: loop
+
+	; Wait for user to restart game
+	LDR v1, =BEGIN_GAME
+game_over_end_loop
+	LDRB ip, [v1]
+	CMP ip, #0
+	BEQ game_over_end_loop	; if game hasnt begun yet, wait
+	BAL begin_game
+
 	LDMFD sp!, {lr}
 	BX lr
+
+restart_game
+	STMFD sp!, {lr, v1, v2}
+	
+	LDR v1, =GAME_OVER
+	MOV v2, #0
+	STRB v2, [v1]
+
+	LDR v1, =BEGIN_GAME
+	MOV v2, #1
+	STRB v2, [v1]
+	
+	LDMFD sp!, {lr, v1, v2}
+	BX lr
+
 
 FIQ_Handler
 		STMFD SP!, {r0-r12, lr}  	; Save registers r0-r12, lr
@@ -156,8 +179,8 @@ MR0_Interrupt
 		BL just_fygar_update
 		BL just_update_bullet
 		BL handle_and_detect_all
-		BL update_board
 MR0_end
+		BL update_board
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
 
 		ORR r1, r1, #1		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #1
@@ -176,13 +199,14 @@ MR1_Interrupt
 		LDRB ip, [v1]
 		CMP ip, #0
 		BEQ MR1_end
-		BL update_model
+		
 MR1_end
 		LDR v1, =CURRENT_TIME
 		LDR ip, [v1]
 		BL get_match1
 		ADD a1, a1, ip
 
+		BL update_model
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
 
 		ORR r1, r1, #2		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #2
@@ -218,6 +242,19 @@ U0RDA	; UART0 RDA interrupts
 		BL read_character
 		MOV ip, a1			; hold character in ip
 
+		LDR v1, =GAME_OVER
+		LDRB a1, [v1]
+		CMP a1, #0
+		BEQ U0RDA_game_running
+
+		CMP ip, #'R'
+		CMPNE ip, #'r'
+		BLEQ restart_game
+		CMP ip, #'R'
+		CMPNE ip, #'r'
+		BEQ U0RDA_end
+
+U0RDA_game_running
 		LDR v1, =DUG_SPRITE
 		LDMIA v1, {a1-a2}	; load DUG_SPRITE coordinates
 		MOV a3, #-1			; dont update lives
@@ -248,19 +285,19 @@ U0RDA	; UART0 RDA interrupts
 		BAL U0RDA_end
 		; TODO: check for collisions
 KEY_UP
-		MOV a1, #DIR_UP
+		MOV a1, #0
 		BAL	U0RDA_update
 
 KEY_DOWN
-		MOV a1, #DIR_DOWN
+		MOV a1, #1
 		BAL	U0RDA_update
 
 KEY_LEFT
-		MOV a1, #DIR_LEFT
+		MOV a1, #2
 		BAL	U0RDA_update
 
 KEY_RIGHT
-		MOV a1, #DIR_RIGHT
+		MOV a1, #3
 		BAL	U0RDA_update
 
 ENTER_PRESS
