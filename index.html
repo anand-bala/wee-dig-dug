@@ -69,7 +69,7 @@ The controller is a relatively small component, responsible mainly for updating 
 The **Model** maintains the internal representation of the board and triggers **View** updates. It exposed routines that allows the
 **Controller** to trigger updates on the **Model**.
 
-(###) Implementation
+### Implementation
 
 The **Model** consists of an ___"array"___ (created using the `FILL` directive) of size $19 \times 15$ bytes, each byte representing a grain
 of sand.
@@ -92,7 +92,7 @@ SPRITE
 There are also staticaly defined regions of memory that keep track of the various states the game could possibly be in, for example, `PAUSE`, `GAME_OVER`.
 The **Model** is also responsible for keeping track of other variables of the game, such as, `LEVEL`, `HIGH_SCORE`, `CURRENT_SCORE` and `TIME`.
 
-(###) Operations
+### Operations
 
 Operations that are defined by the **Model** are:
 
@@ -112,7 +112,7 @@ The **View** is responsible for rendering **Model** onto the GUI. It possessed r
 the **Model** uses to trigger updates to the GUI. This implementation was chosen as updates can
 be triggered as and when the **Model** is updates.
 
-(###) Implementation
+### Implementation
 
 
 <!-- <link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/latex.css"> -->
@@ -121,7 +121,7 @@ be triggered as and when the **Model** is updates.
 <style class="fallback">body{visibility:hidden}</style>
 <script>
 	window.markdeepOptions = {
-		tocStyle: 'long',
+		tocStyle: 'long,
 		detectMath: true,
 		showURLs: true
 	}
