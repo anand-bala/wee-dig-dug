@@ -43,15 +43,22 @@ You can use the 5th Push Button to `PAUSE` the game whenever you want.
 
 The game is designed similar to a **Model-View-Controller (MVC)** framework.
 This architecture is a common way of designing applications with a User Interface.
-A **MVC** framework works in the following way:
+According to this, each component is responsible for a particular task, and only that component is allowed to perform that task.
 
-* Each component is responsible for a particular task, and only that component is allowed to perform that task.
-* The **Model** is the internal representation of the application, and it is responsible to maintain the state of the application at any time.
-* The **View** is the GUI. It works by reading the **Model** and displaying the graphical representation of the model on the screen.
-* The **Controller** is the component that is responsible for listening to user input and updating the model accordingly.
-* **MVC** components interact with each other the following way:
+**Model**
+:   This is the part of the framework responsible for maintainin the internal representation of the application.
 
-`TODO: Insert MVC image`
+    The **Model** in this game holds the location where sand is present, state of each sprite and state variables of the game.
+
+**View**
+:   The **View** is responsible for rendering the **Model** onto the GUI. 
+    It contains routines that display the board, the sprites and the sand on a console screen.
+
+**Controller**
+:   The **Controller** is responsible for handling user input and triggering changes in the **Model**.
+    It contains the entry point for the game and interrupt handlers.
+
+![Figure [mvc-process]: The components of the framework interacting with each other (courtsey: Wikipdia)](assets/img/mvc-process.svg width="50%")
 
 ## Controller (controller.s)
 
