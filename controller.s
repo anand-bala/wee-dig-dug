@@ -198,6 +198,7 @@ EINT1_interrupt	; Check for EINT1 interrupt
 
 		; Push button EINT1 Handling Code
 		BL toggle_pause_game
+		BL update_model
 EINT1_end
 
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr

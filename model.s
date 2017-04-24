@@ -52,6 +52,11 @@
 	IMPORT	update_board
 	IMPORT	clear_sprite
 
+	EXPORT BEGIN_GAME
+	EXPORT PAUSE_GAME
+	EXPORT GAME_OVER
+	EXPORT RUNNING_P
+
 ;;;;;;;;;;;;;;;;;;;;;
 ;	CONSTANTS		;
 ;;;;;;;;;;;;;;;;;;;;;
@@ -143,7 +148,8 @@ GAME_BOARD	FILL BOARD_SIZE, 0x00, 1	; Define a 2560 byte array with 1 byte 1s si
 BEGIN_GAME	= 0,0	; Boolean to start game
 PAUSE_GAME	= 0,0	; Boolean to pause game
 GAME_OVER	= 0,0	; Boolean for game over
-RUNNING_P	= 0,0	; Boolean to seee if game is running
+RUNNING_P	= 0,0	; Boolean to seee if game is running	  
+
 	ALIGN
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
