@@ -8,10 +8,12 @@
 	EXPORT	DIRECTION
 	EXPORT	OLD_X_POS
 	EXPORT	OLD_Y_POS
+
 	EXPORT	DIR_UP
 	EXPORT	DIR_DOWN
 	EXPORT	DIR_LEFT
 	EXPORT	DIR_RIGHT
+
 	EXPORT	GAME_BOARD
 	EXPORT	HIGH_SCORE
 	EXPORT	LEVEL
@@ -45,6 +47,8 @@
 
 	IMPORT Game_over_gui
 	IMPORT	get_nbit_rand
+	IMPORT	disable_timer0
+	IMPORT	reset_timer0
 
 	IMPORT	draw_empty_board
 	IMPORT	populate_board
@@ -384,7 +388,13 @@ reset_board_loop
 	BL kill_sprite
 
 ; Now update the GUI
+	LDR v1, =GAME_OVER
+	LDRB ip, [v1]
+	CMP ip, #0		; check if not game over
+	BNE model_normal_update	; if game over, GAME OVER GUI 
 
+	BL Game_over_gui
+model_normal_update
 	BL draw_empty_board
 	BL populate_board
 
@@ -404,11 +414,21 @@ model_game_over
 	MOV ip, #0
 	STRB ip, [v1]
 
+	LDR v1, =PAUSE_GAME
+	MOV ip, #0
+	STRB ip, [v1]
+
+	LDR v1, =BEGIN_GAME
+	MOV ip, #0
+	STRB ip, [v1]
+
 	LDR v1, =GAME_OVER
 	MOV ip, #1
 	STRB ip, [v1]
 
-	BL Game_over_gui
+	BL reset_timer0
+	BL disable_timer0
+	BL reset_model
 	; TODO: GUI Update
 	; TODO: Peripheral Update
 
@@ -712,7 +732,7 @@ update_dug
 end_model_update
 ; Trigger GUI updates
 	BL update_board
-; TODO: Trigger peripheral updates
+; Trigger peripheral updates
 	BL update_peripherals
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
@@ -977,13 +997,16 @@ is_dug_check
 
 is_dug_fatal			; Handle fatal collisions
 	LDR a1, [v1, #LIVES]
-	SUB a1, a1, #1
-	STR a1, [v1, #LIVES]
+	SUB v2, a1, #1
+	STR v2, [v1, #LIVES]
+
 	LDR a1, [v1, #X_POS]
 	LDR a2, [v1, #Y_POS]
 	BL clear_sprite
-	CMP a1, #0
+
+	CMP v2, #0
 	BLEQ model_game_over
+	CMP v2, #0
 	BLGT respawn_game_sprites
 	BAL collision_end
 is_dug_sand

@@ -12,6 +12,7 @@
 	EXPORT	set_match2
 	EXPORT	set_match3
 	EXPORT	reset_timer0
+	EXPORT	disable_timer0
 
 
 	EXPORT	clear_7_seg
@@ -285,6 +286,15 @@ reset_timer0
 	MOV a2, #0x2
 	STR a2, [a1, #T_TCR]		;
 	MOV a2, #0x1
+	STR a2, [a1, #T_TCR]		;
+	LDMFD sp!, {lr}
+	BX lr
+
+disable_timer0
+	STMFD SP!,{lr}	; Store register lr on stack
+	
+	LDR a1, =TIMER0		; Load TIMER0 Base address
+	MOV a2, #0x2
 	STR a2, [a1, #T_TCR]		;
 	LDMFD sp!, {lr}
 	BX lr

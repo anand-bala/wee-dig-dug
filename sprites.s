@@ -1,7 +1,6 @@
 	AREA sprites, CODE, READWRITE
 	EXPORT	DUG_LEFT
-	EXPORT GAME_BEGIN_GUI
-	EXPORT GAME_END_GUI
+
 
 DUG_LEFT
 	DCB	0x1b,0x5b,0x30,0x3b,0x34,0x30,0x3b,0x33,0x37,0x6d,0x0d,0x0a
@@ -24,28 +23,4 @@ DUG_LEFT
 
 	ALIGN
 
-GAME_BEGIN_GUI
-	DCB "|------------------------------------------------------------------|",13,10
-	DCB "|Welcome to Wee Dig Dug.                                           |",13,10
-	DCB "|Written by Ananad Bal and Amrit Pal Singh                         |",13,10
-	DCB "|You have 4 lives. Use em wisely!!                                 |",13,10
-	DCB "|You will start in the center.                                     |",13,10
-	DCB "|Game level increases once all enemies are eleminated.             |",13,10
-	DCB "|Press spacebar to shoot bullets. They CANNOT travel through dirt!.|",13,10
-	DCB "|Z: Unbreakable Walls                                              |",13,10
-	DCB "|#: dirt                                                           |",13,10
-	DCB "|>: Player (facing right)                                          |",13,10
-	DCB "|x: Small Enemy                                                    |",13,10
-	DCB "|B: Big Enemy                                                      |",13,10
-	DCB "|Press any key to Begin.                                           |",13,10
-	DCB "|------------------------------------------------------------------|",13,10,0
-GAME_END_GUI
-	DCB "|-----------------------------------------|",13,10
-	DCB "|You have DIED!                           |",13,10
-	DCB "|Press R to retry.                        |",13,10
-	DCB "|Press Q to quit and go back to your life.|",13,10
-	DCB "|-----------------------------------------|",13,10,0
-
-GAME_PAUSED_GUI
-	;todo
 	END

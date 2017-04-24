@@ -1,6 +1,5 @@
 	AREA GUI, CODE, READWRITE
 	
-   	IMPORT GAME_END_GUI
 	EXPORT Game_over_gui
 	; Information about board	
 	IMPORT	BOARD_WIDTH
@@ -31,6 +30,11 @@
 	IMPORT	LEVEL
 	IMPORT	CURRENT_SCORE
 	IMPORT	CURRENT_TIME
+
+	IMPORT	BEGIN_GAME
+	IMPORT	PAUSE_GAME
+	IMPORT	GAME_OVER
+	IMPORT	RUNNING_P
 	
 	; Sprite Structures
 	IMPORT	DUG_SPRITE
@@ -56,6 +60,8 @@
 	EXPORT	DUG_GUI
 	EXPORT	FYGAR_GUI
 	EXPORT	POOKA_GUI
+	EXPORT	GAME_BEGIN_GUI
+	EXPORT	GAME_END_GUI
 	
 	; Model routines
 	IMPORT	get_sand_at_xy
@@ -129,6 +135,29 @@ DEBUG1_val	=	"000000",10,13,0
 DEBUG2_str	=	27,"[22;0fDEBUG2: "
 DEBUG2_val1	=	"000000, "
 DEBUG2_val2	=	"000000",10,13,0
+
+GAME_BEGIN_GUI
+	DCB "|------------------------------------------------------------------|",13,10
+	DCB "|Welcome to Wee Dig Dug.                                           |",13,10
+	DCB "|Written by Ananad Bal and Amrit Pal Singh                         |",13,10
+	DCB "|You have 4 lives. Use em wisely!!                                 |",13,10
+	DCB "|You will start in the center.                                     |",13,10
+	DCB "|Game level increases once all enemies are eleminated.             |",13,10
+	DCB "|Press spacebar to shoot bullets. They CANNOT travel through dirt!.|",13,10
+	DCB "|Z: Unbreakable Walls                                              |",13,10
+	DCB "|#: dirt                                                           |",13,10
+	DCB "|>: Player (facing right)                                          |",13,10
+	DCB "|x: Small Enemy                                                    |",13,10
+	DCB "|B: Big Enemy                                                      |",13,10
+	DCB "|Press any key to Begin.                                           |",13,10
+	DCB "|------------------------------------------------------------------|",13,10,0
+
+GAME_END_GUI
+	DCB "|-----------------------------------------|",13,10
+	DCB "|You have DIED!                           |",13,10
+	DCB "|Press R to retry.                        |",13,10
+	DCB "|Press Q to quit and go back to your life.|",13,10
+	DCB "|-----------------------------------------|",13,10,0
 
 	ALIGN
 
@@ -253,6 +282,13 @@ populate_end
 update_board
 	STMFD sp!, {lr, v1-v8}
 
+	LDR v1, =GAME_OVER
+	LDRB v2, [v1]
+	CMP v2, #0
+	BLNE Game_over_gui
+	CMP v2, #0
+	BNE gui_update_end
+
 ; 1. Draw Enemies
 ; -- 1.1. Draw Fygar
 	LDR v1, =FYGAR_GUI
@@ -330,7 +366,7 @@ update_board
 
 	LDR v1, =TIME_str
 	BL output_string
-	
+gui_update_end	
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
