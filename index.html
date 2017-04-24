@@ -60,7 +60,9 @@ According to this, each component is responsible for a particular task, and only
 
 ![Figure [mvc-process]: The components of the framework interacting with each other (courtsey: Wikipdia)](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/MVC-Process.svg/1200px-MVC-Process.svg.png width="50%")
 
-## Controller (controller.s)
+## Controller
+
+**FILES**: controller.s
 
 The **Controller** mainly contains interrupt handlers, and it is also the entry point for the game.
 In is, we do the following:
@@ -71,7 +73,9 @@ In is, we do the following:
 
 The controller is a relatively small component, responsible mainly for updating the **Model** via subroutines exposed by the **Model**.
 
-## Model (model.s)
+## Model 
+
+**FILES**: `model.s`
 
 The **Model** maintains the internal representation of the board and triggers **View** updates. It exposed routines that allows the
 **Controller** to trigger updates on the **Model**.
@@ -113,7 +117,10 @@ Operations that are defined by the **Model** are:
 * Spawn sprites.
 
 
-## View (gui.s)
+## View 
+
+**FILES**: `gui.s`, `peripherals.s`
+
 
 The **View** is responsible for rendering **Model** onto the GUI. It possessed routines that
 the **Model** uses to trigger updates to the GUI. This implementation was chosen as updates can
