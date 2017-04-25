@@ -635,7 +635,7 @@ update_dug
 	LDR v1, =UPDATE_DUG_P
 	LDRB ip, [v2]
 	CMP ip, #1				; check if update flag is raised
-	BNE update_dug			; if not, dont change anything
+	BNE post_movement_update			; if not, dont change anything
 	; else, load new direction and move
 	LDR v1, =DIR_TO_MOVE_DUG
 	LDR a1, [v2]			; change Dug's direction
@@ -649,7 +649,7 @@ update_dug
 
 post_movement_update
 ; Detect and handle collisions
-	BL handle_and_detect_all
+;	BL handle_and_detect_all
 
 end_model_update
 ; Trigger GUI updates

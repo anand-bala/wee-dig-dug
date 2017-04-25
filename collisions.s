@@ -259,7 +259,7 @@ get_a_free_direction
 	MOV ip, #DIR_RIGHT
 	LSL ip, ip, #3
 	CMP v2, #18
-	ORREQ v1, v1, a1, LSL #DIR_RIGHT	; set 3rd bit to 1 for wall
+	ORREQ v1, v1, a1, LSL ip	; set 3rd bit to 1 for wall
 ; 2.2	Check for wall at (x - 1, y) LEFT
 	MOV ip, #DIR_LEFT
 	LSL ip, ip, #3
@@ -315,12 +315,12 @@ get_a_free_direction
 	CMPNE a1, #1			; || distance == 1
 	ORREQ v1, v1, a1, LSL #DIR_RIGHT	; set 1st bit to 1 for bullet	
 
-; Return a OK direction to go based on map	(randomly may do it
+; Return a OK direction to go based on map	(randomly may do it	?)
+	MOV a1, #0
 obstacle_map_loop
-	MOV a1, #2
-	BL get_nbit_rand	; get 2 bit random number
-   	LSR ip, v1, a1		; set random byte in map as 0th byte
-	AND ip, ip, #0xF	; isolate the random byte
+	LSR ip, v1, a1		; set random byte in map as 0th byte
+	AND ip, ip, #0xF	; isolate the first byte
+	ADD a1, a1, #1
 	CMP ip, #0			; check if the direction is free
 	BNE obstacle_map_loop	; if not free, check again
 	; else return direction in a1
