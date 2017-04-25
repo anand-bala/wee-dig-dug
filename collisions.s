@@ -219,7 +219,7 @@ get_a_free_direction
 	MOV v2, a1	; hold my x
 	MOV v3, a2	; hold my y
 	MOV v1, #0	; cleared map
-	MOV ip, #1	; hold 1 for storage
+	MOV v4, #1	; hold 1 for storage
 
 ; 1. Check for sand	around (x,y)
 
@@ -229,29 +229,27 @@ get_a_free_direction
 	ADD a1, v2, #1	; x + 1
 	MOV a2, v3		; y
 	BL get_sand_at_xy	; get sand at (x + 1, y)
-	ORREQ v1, v1, a1, LSL ip	; set 3rd byte to value of sand
+	ORR v1, v1, a1, LSL ip	; set 3rd byte to value of sand
 ; 1.1 Check to the LEFT
 	MOV ip, #DIR_LEFT
 	LSL ip, ip, #3			; use ip as byte offset
 	SUB a1, v2, #1	; x - 1
 	MOV a2, v3		; y
 	BL get_sand_at_xy	; get sand at (x - 1, y)
-	ORREQ v1, v1, a1, LSL ip	; set 3rd byte to value of sand
+	ORR v1, v1, a1, LSL ip	; set 3rd byte to value of sand
 ; 1.1 Check to the UP
 	MOV ip, #DIR_UP
 	LSL ip, ip, #3			; use ip as byte offset
 	MOV a1, v2		; x
 	SUB a2, v3, #1	; y - 1
 	BL get_sand_at_xy	; get sand at (x, y - 1)
-	CMP a1, #1		; check if sand
-	ORREQ v1, v1, a1, LSL ip	; set 3rd byte to value of sand
+	ORR v1, v1, a1, LSL ip	; set 3rd byte to value of sand
 ; 1.1 Check to the DOWN
 	MOV ip, #DIR_DOWN
 	LSL ip, ip, #3			; use ip as byte offset	MOV a1, v2		; x
 	ADD a2, v3, #1	; y + 1
 	BL get_sand_at_xy	; get sand at (x, y + 1)
-	CMP a1, #1		; check if sand
-	ORREQ v1, v1, a1, LSL ip	; set 3rd byte to value of sand
+	ORR v1, v1, a1, LSL ip	; set 3rd byte to value of sand
 
 ; 2. 	Check for walls around sprite
 	MOV a1, #1
