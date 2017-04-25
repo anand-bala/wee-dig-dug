@@ -8,11 +8,17 @@
 	EXPORT	DIRECTION
 	EXPORT	OLD_X_POS
 	EXPORT	OLD_Y_POS
+	EXPORT	SPRITE_TYPE
 
 	EXPORT	DIR_UP
 	EXPORT	DIR_DOWN
 	EXPORT	DIR_LEFT
 	EXPORT	DIR_RIGHT
+
+	EXPORT	DUG_TYPE	
+	EXPORT	POOKA_TYPE	
+	EXPORT	FYGAR_TYPE	
+	EXPORT	BULLET_TYPE	
 
 	EXPORT	GAME_BOARD
 	EXPORT	HIGH_SCORE
@@ -57,6 +63,9 @@
 
 	IMPORT update_peripherals
 
+	IMPORT	enemy_collision_with_sand_wall
+	IMPORT	move_sprite_given_dir
+
 	EXPORT BEGIN_GAME
 	EXPORT PAUSE_GAME
 	EXPORT GAME_OVER
@@ -82,11 +91,17 @@ OLD_X_POS	EQU 4*4
 OLD_Y_POS	EQU 5*4
 ORIGINAL_X	EQU 6*4
 ORIGINAL_Y	EQU 7*4
+SPRITE_TYPE	EQU 8*4
 
 DIR_UP		EQU 0
 DIR_DOWN	EQU 1
 DIR_LEFT	EQU 2
 DIR_RIGHT	EQU 3
+
+DUG_TYPE	EQU	0
+POOKA_TYPE	EQU	1
+FYGAR_TYPE	EQU	2
+BULLET_TYPE	EQU	3
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	GAME STATE		;
@@ -101,6 +116,7 @@ DUG_SPRITE		; State of the Dug sprite
 	DCD 20			; Old Y
 	DCD 9			; Original X
 	DCD 7			; Original Y
+	DCD	DUG_TYPE	; Type = DUG
 
 FYGAR_SPRITE_1		; State of 1st Fygar sprite
 	DCD 1			; x position
@@ -111,6 +127,7 @@ FYGAR_SPRITE_1		; State of 1st Fygar sprite
 	DCD 1			; Old Y
 	DCD 9			; Original X
 	DCD 7			; Original Y
+	DCD	FYGAR_TYPE	; Type = DUG
 
 POOKA_SPRITE_1		; State of 1st Pooka sprite
 	DCD 10			; x position
@@ -121,6 +138,7 @@ POOKA_SPRITE_1		; State of 1st Pooka sprite
 	DCD 1			; Old Y
 	DCD 9			; Original X
 	DCD 7			; Original Y
+	DCD	POOKA_TYPE	; Type = DUG
 
 POOKA_SPRITE_2		; State of 2nd Pooka sprite
 	DCD 15			; x position
@@ -131,6 +149,7 @@ POOKA_SPRITE_2		; State of 2nd Pooka sprite
 	DCD 15			; Old Y
 	DCD 9			; Original X
 	DCD 7			; Original Y
+	DCD	POOKA_TYPE	; Type = DUG
 
 PUMP_SPRITE		; State of the Pump sprite
 	DCD 100			; x position
@@ -141,6 +160,7 @@ PUMP_SPRITE		; State of the Pump sprite
 	DCD 100			; Old Y
 	DCD 100			; Original X
 	DCD 100			; Original Y
+	DCD	BULLET_TYPE	; Type = DUG
 
 
 HIGH_SCORE	DCD 0
@@ -435,6 +455,7 @@ model_game_over
 
 	BL reset_timer0
 	BL disable_timer0
+
 	BL reset_model
 	; TODO: GUI Update
 	; TODO: Peripheral Update
@@ -552,187 +573,81 @@ update_model
 
 ; 1. Move the enemy sprites
 ; -- 1.1 Move FYGAR1
+update_fygar
 	; Load FYGAR 1
 	LDR v1, =FYGAR_SPRITE_1
 	; Get current stats
-	LDR a1, [v1, #X_POS]
-	LDR a2, [v1, #Y_POS]
-	LDR a3, [v1, #LIVES]
-	LDR a4, [v1, #DIRECTION]
-
+	LDR a1, [v1, #DIRECTION]
+	LDR a2, [v1, #LIVES]
 	; Check if LIVES != 0
-	CMP a3, #0
-	BEQ update_fygar
-
-	MOV ip, a1
-	MOV a1, #2	; to get a 2 bit rand
-	BL get_nbit_rand
-	MOV a4, a1
-	MOV a1, ip
-
-	; Update X and Y based on Direction
-	
-	CMP a4, #DIR_UP		; Check if direction is UP
-	SUBEQ a2, a2, #1	; Then decrement y (a2)
-	BEQ update_fygar	; finish updating fygar
-	
-	CMP a4, #DIR_DOWN	; Check if dir is DOWN
-	ADDEQ a2, a2, #1	; Then increment y (a2)
-	BEQ update_fygar	; finish updating fygar
-
-	CMP a4, #DIR_LEFT	; check if dir == LEFT
-	SUBEQ a1, a1, #1	; then decrement x (a1)
-	BEQ update_fygar	; finish updating fygar
-
-	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
-	ADDEQ a1, a1, #1	; then increment x (a1)
-	BEQ update_fygar	; finish updating fygar
-
-update_fygar
-	BL update_sprite	; update fygar sprite
-
-; -- 1.2 Move POOKA1
-	; Load POOKA1
-	LDR v1, =POOKA_SPRITE_1
-	; Get current stats
-	LDR a1, [v1, #X_POS]
-	LDR a2, [v1, #Y_POS]
-	LDR a3, [v1, #LIVES]
-	LDR a4, [v1, #DIRECTION]
-
-	; Check if LIVES != 0
-	CMP a3, #0
+	CMP a2, #0
 	BEQ update_pooka1
 
-	; Update X and Y based on Direction
-	
-	CMP a4, #DIR_UP		; Check if direction is UP
-	SUBEQ a2, a2, #1	; Then decrement y (a2)
-	BEQ update_pooka1	; finish updating pooka1
-	
-	CMP a4, #DIR_DOWN	; Check if dir is DOWN
-	ADDEQ a2, a2, #1	; Then increment y (a2)
-	BEQ update_pooka1	; finish updating pooka1
-
-	CMP a4, #DIR_LEFT	; check if dir == LEFT
-	SUBEQ a1, a1, #1	; then decrement x (a1)
-	BEQ update_pooka1	; finish updating pooka1
-
-	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
-	ADDEQ a1, a1, #1	; then increment x (a1)
-	BEQ update_pooka1	; finish updating pooka1
-
+	BL move_sprite_given_dir ; Update X and Y based on Direction
+	BL enemy_collision_with_sand_wall
+; -- 1.2 Move POOKA1
+	; Load POOKA1
 update_pooka1
-	BL update_sprite	; update pooka1 sprite
+	LDR v1, =POOKA_SPRITE_1
+	; Get current stats
+	LDR a1, [v1, #DIRECTION]
+	LDR a2, [v1, #LIVES]
+	; Check if LIVES != 0
+	CMP a2, #0
+	BEQ update_pooka2
+
+	BL move_sprite_given_dir ; Update X and Y based on Direction
+	BL enemy_collision_with_sand_wall
 
 ; -- 1.3 Move POOKA2
 	; Load POOKA2
+update_pooka2
 	LDR v1, =POOKA_SPRITE_2
 	; Get current stats
-	LDR a1, [v1, #X_POS]
-	LDR a2, [v1, #Y_POS]
-	LDR a3, [v1, #LIVES]
-	LDR a4, [v1, #DIRECTION]
-
+	LDR a1, [v1, #DIRECTION]
+	LDR a2, [v1, #LIVES]
 	; Check if LIVES != 0
-	CMP a3, #0
+	CMP a2, #0
 	BEQ update_pooka2
 
-	; Update X and Y based on Direction
-	
-	CMP a4, #DIR_UP		; Check if direction is UP
-	SUBEQ a2, a2, #1	; Then decrement y (a2)
-	BEQ update_pooka2	; finish updating pooka2
-	
-	CMP a4, #DIR_DOWN	; Check if dir is DOWN
-	ADDEQ a2, a2, #1	; Then increment y (a2)
-	BEQ update_pooka2	; finish updating pooka2
-
-	CMP a4, #DIR_LEFT	; check if dir == LEFT
-	SUBEQ a1, a1, #1	; then decrement x (a1)
-	BEQ update_pooka2	; finish updating pooka2
-
-	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
-	ADDEQ a1, a1, #1	; then increment x (a1)
-	BEQ update_pooka2	; finish updating pooka2
-
-update_pooka2
-	BL update_sprite	; update pooka2 sprite
+	BL move_sprite_given_dir ; Update X and Y based on Direction
+	BL enemy_collision_with_sand_wall
 
 ; 2. Move bullet, if there exists one
+update_bullet
 	; Load PUMP stats
 	LDR v1, =PUMP_SPRITE
-	LDR a1, [v1, #X_POS]
-	LDR a2, [v1, #Y_POS]
-	LDR a3, [v1, #LIVES]
-	LDR a4, [v1, #DIRECTION]
+	LDR a1, [v1, #LIVES]
+	LDR a2, [v1, #DIRECTION]
 
 	; Check if LIVES != 0
-	CMP a3, #0
-	BEQ update_bullet	; if LIVES == 0, finish
+	CMP a2, #0
+	BEQ update_dug	; if LIVES == 0, finish
 	; else, update position
-
-	CMP a4, #DIR_UP		; Check if direction is UP
-	SUBEQ a2, a2, #1	; Then decrement y (a2)
-	BEQ update_bullet	; finish updating bullet
-	
-	CMP a4, #DIR_DOWN	; Check if dir is DOWN
-	ADDEQ a2, a2, #1	; Then increment y (a2)
-	BEQ update_bullet	; finish updating bullet
-
-	CMP a4, #DIR_LEFT	; check if dir == LEFT
-	SUBEQ a1, a1, #1	; then decrement x (a1)
-	BEQ update_bullet	; finish updating bullet
-
-	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
-	ADDEQ a1, a1, #1	; then increment x (a1)
-	BEQ update_bullet	; finish updating bullet
-
-update_bullet
-	BL update_sprite
-
+	BL move_sprite_given_dir ; Update X and Y based on Direction	
+	BL enemy_collision_with_sand_wall
 
 ; 3. Move Dug
-	; Load DUG stats
-	LDR v1, =DUG_SPRITE
-	LDR a1, [v1, #X_POS]
-	LDR a2, [v1, #Y_POS]
-	LDR a3, [v1, #LIVES]
-	LDR a4, [v1, #DIRECTION]
-
-; TODO: What if Dug dies
-
-	LDR v2, =UPDATE_DUG_P
-	LDRB ip, [v2]
-	CMP ip, #1	; check if update flag is raised
-	BNE update_dug	; if not, dont change anything
-
-	; else, load new direction and move
-	LDR v2, =DIR_TO_MOVE_DUG
-	LDR a4, [v2]	; change Dug's direction
-
-	CMP a4, #DIR_UP		; Check if direction is UP
-	SUBEQ a2, a2, #1	; Then decrement y (a2)
-	BEQ update_dug	; finish updating dug
-	
-	CMP a4, #DIR_DOWN	; Check if dir is DOWN
-	ADDEQ a2, a2, #1	; Then increment y (a2)
-	BEQ update_dug	; finish updating dug
-
-	CMP a4, #DIR_LEFT	; check if dir == LEFT
-	SUBEQ a1, a1, #1	; then decrement x (a1)
-	BEQ update_dug	; finish updating dug
-
-	CMP a4, #DIR_RIGHT	; check if dir == RIGHT
-	ADDEQ a1, a1, #1	; then increment x (a1)
-	BEQ update_dug	; finish updating dug
-
 update_dug
+
+	; check if user asked dug to move
+
+	LDR v1, =UPDATE_DUG_P
+	LDRB ip, [v2]
+	CMP ip, #1				; check if update flag is raised
+	BNE update_dug			; if not, dont change anything
+	; else, load new direction and move
+	LDR v1, =DIR_TO_MOVE_DUG
+	LDR a1, [v2]			; change Dug's direction
+	LDR v1, =DUG_SPRITE		; Load DUG
+	BL move_sprite_given_dir 
+
 	BL update_sprite
 	LDR v1, =UPDATE_DUG_P
 	MOV ip, #0
 	STRB ip, [v1]
 
+post_movement_update
 ; Detect and handle collisions
 	BL handle_and_detect_all
 
@@ -1476,7 +1391,7 @@ kill_sprite
 	CMP v2, #0
 	MOVLE v2, #0
 	STR v2, [v1, #LIVES]
-	BL clear_sprite
+	; BL clear_sprite
 	CMP v2, #0
 	MOVEQ v2, #100
 	STREQ v2, [v1, #X_POS]
@@ -1519,10 +1434,10 @@ level_up_dug
 	ADD ip, ip, #1
 	STR ip, [v1]
 
-
-
 	BL reset_model
 
 	LDMFD sp!, {lr, v1}
 	BX lr
+
+
 	END

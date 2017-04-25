@@ -109,7 +109,7 @@ begin_game
 	BL timer_init
 	BL read_character
 
-  BL interrupt_init
+ 	BL interrupt_init
 	BL init_model
 
 	; Set MR1 to half sec and reset it
