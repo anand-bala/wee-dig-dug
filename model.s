@@ -190,12 +190,13 @@ DIR_TO_MOVE_DUG	DCD	DIR_LEFT
 ;	SUBROUTINES		;
 ;;;;;;;;;;;;;;;;;;;;;
 
-;;;;;;;;;;;;;;
-; INIT MODEL ;
-;;;;;;;;;;;;;;
 
+; Initialize model.
+; This routine has to do the following:
+; 1. Set current score to 0 and level to 1
+; 2. Reset the sprites on the board
 init_model
-	STMFD sp!, {lr, v1-v8}
+	STMFD sp!, {lr, v1}
 	MOV a1, #0
 	LDR v1, =CURRENT_SCORE
 	STR a1, [v1]
@@ -203,71 +204,70 @@ init_model
 	MOV a1, #1
 	STR a1, [v1]
 	BL reset_model
-	LDMFD sp!, {lr, v1-v8}
+	LDMFD sp!, {lr, v1}
 	BX lr
 	
 
-;;;;;;;;;;;;;;;
-; RESET MODEL :
-;;;;;;;;;;;;;;;
+; Reset Model has to:
+; 1. Reset variables on board.
+; 2. Set sprites to random positions on the board
+; 3. Update GUI appropriately
+; NOTE: Reset model is called by game over handling routine, so we must reset and display game over.
 reset_model
 	STMFD sp!, {lr, v1-v8}
 
 	; Reset the board to initial state
 	LDR v1, =GAME_BOARD	; load Game Board address
-	ADD v1, v1, #38		; Dont fill first two rows
+	ADD v1, v1, #38		; Dont fill first two rows, so adjust offset by 38
 	LDR v2, =BOARD_SIZE	; Load board size into v2
-	SUB v2, v2, #38		; dont count first two rows
+	SUB v2, v2, #38		; dont count first two rows, so reduce count by 38
 	MOV ip, #1		; ip = sand
 
 	; Loop to reinitialize the board.
-	; Fill board with sand
+; 1. Fill board with sand
 reset_board_loop
 	STRB ip, [v1], #1	; Store 1 byte at current index on board and increment index (sand by default)
 	SUBS v2, #1			; Decrement residual index (and set CPSR)
 	BGT reset_board_loop ; Loop while index > 0
 
-; Set Dug sprite to center with 4 lives	and looking left
-	LDR v1, =DUG_SPRITE
-	MOV a1, #BOARD_CENTER_X
-	STR a1, [v1, #ORIGINAL_X]
-	STR a1, [v1, #OLD_X_POS]
-	STR a1, [v1, #X_POS]
-	MOV a2, #BOARD_CENTER_Y
-	STR a2, [v1, #ORIGINAL_Y]
-	STR a2, [v1, #OLD_Y_POS]
-	STR a2, [v1, #Y_POS]
-	MOV a3, #4
-	STR a3, [v1, #LIVES]
-	MOV a4, #DIR_LEFT
-	STR a4, [v1, #DIRECTION]
-
-	; Clear sand around Dug	(8,7),(9,7),(10,7)
-	MOV a1, #8
-	MOV a2, #7
-	BL clear_at_x_y
-	MOV a1, #9
-	MOV a2, #7
-	BL clear_at_x_y
-	MOV a1, #10
-	MOV a2, #7
-	BL clear_at_x_y
-
+; 2.	Initialize DUG
+; 2.1	Set Dug sprite to center with 4 lives and looking left
+	LDR v1, =DUG_SPRITE		; Load DUG
+	MOV a1, #BOARD_CENTER_X		; Load X center
+	STR a1, [v1, #ORIGINAL_X]	; Set Original X position to X center
+	STR a1, [v1, #OLD_X_POS]	; Set Old X
+	STR a1, [v1, #X_POS]		; Set Current X
+	MOV a2, #BOARD_CENTER_Y		; Load Y center
+	STR a2, [v1, #ORIGINAL_Y]	; Set Original Y
+	STR a2, [v1, #OLD_Y_POS]	; Set Old Y
+	STR a2, [v1, #Y_POS]		; Set Current Y
+	MOV a3, #4			; Load in 4 lives
+	STR a3, [v1, #LIVES]		; Set number of lives = 4
+	MOV a4, #DIR_LEFT		;
+	STR a4, [v1, #DIRECTION]	; Set initial direction to LEFT
+; 2.2	Clear sand around Dug (8,7),(9,7),(10,7)
+	MOV a1, #8			; x = 8
+	MOV a2, #7			; y = 7
+	BL clear_at_x_y			; clear
+	MOV a1, #9			; x = 9
+	MOV a2, #7			; x = 7
+	BL clear_at_x_y			; clear
+	MOV a1, #10			; x = 10
+	MOV a2, #7			; x = 7
+	BL clear_at_x_y			; clear
 	
-; Set Fygar1 to random position
+; 3.1	Initialize FYGAR
 	LDR v1, =FYGAR_SPRITE_1
 	
-	; Set random dir
-	MOV a1, #2			; get random 4bit number for direction [0-3]
+; Set random dir
+	MOV a1, #2			; get random 2 bit number for direction [0-3]
 	BL get_nbit_rand
 	STR a1, [v1, #DIRECTION]	; update direction
-
-	; Set Number of lives = 1
+; Set Number of lives = 1
 	MOV a1, #1
 	STR a1, [v1, #LIVES]		; update lives
-
-	; set random Y in range [0-14]	 (4 bit)
-	MOV a1, #4
+; set random Y in range [2-14]	 (4 bit)
+	MOV a1, #4			; get 4 bit rand [0-15]
 	BL get_nbit_rand
 	CMP a1, #2
 	MOVLT a1, #2
@@ -277,8 +277,7 @@ reset_board_loop
 	STR a1, [v1, #OLD_Y_POS]	; update old Y pos
 	STR a1, [v1, #ORIGINAL_Y]	; set original Y
 	MOV a2, a1
-	
-	; set random X in range [0-18]	(5 bit with check)
+; set random X in range [0-18]	(5 bit with check)
 	MOV a1, #5
 	BL get_nbit_rand
 	CMP a1, #2
@@ -288,10 +287,8 @@ reset_board_loop
 	STR a1, [v1, #X_POS]		; update X pos
 	STR a1, [v1, #OLD_X_POS]	; update old X pos
 	STR a1, [v1, #ORIGINAL_X]	; set original X
-
-		
-	; Clear sand for Fygar1 movement  
-	;	(x-2,y)	(x-1,y)	(x,y)	(x+1,y)	(x+2,y)
+; 3.2	Clear sand for Fygar1 movement  
+;	(x-2,y)(x-1,y)(x,y)(x+1,y)(x+2,y)
 
 	; clear_at_x_y changes a1 and a2. Hence, saving x and y in v2, v3
 	MOV v2, a1	; temporarily hold x
