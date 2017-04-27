@@ -311,7 +311,7 @@ set_match0
 	; Get correct bit for MCR (bit x*3)
 	; I R S
 	; 0 1 2
-	MOV a1, #0
+	LDR a1, [v1, #T_MCR]
 	ORR a1, a1, #1			; Set Bit 0 = 1 for interrupt
 	ORR a1, a1, a2, LSL #1	; Set bit 1 = x for reset
 	STR a1, [v1, #T_MCR]
@@ -340,8 +340,9 @@ set_match1
 	; Get correct bit for MCR (bit x*3)
 	; I R S
 	; 0 1 2
-	MOV a1, #1
-	LSL a1, a1, #3			; Set Bit 3 = 1 for interrupt
+	MOV ip, #1
+	LDR a1, [v1, #T_MCR]
+	ORR a1, a1, ip, LSL #3	; Set Bit 3 = 1 for interrupt
 	ORR a1, a1, a2, LSL #4	; Set bit 4 = x for reset
 	STR a1, [v1, #T_MCR]
 
@@ -369,8 +370,9 @@ set_match2
 	; Get correct bit for MCR (bit x*3)
 	; I R S
 	; 0 1 2
-	MOV a1, #1
-	LSL a1, a1, #6			; Set Bit 6 = 1 for interrupt
+	MOV ip, #1
+	LDR a1, [v1, #T_MCR]
+	ORR a1, a1, ip, LSL #6	; Set Bit 6 = 1 for interrupt
 	ORR a1, a1, a2, LSL #7	; Set bit 7 = x for reset
 	STR a1, [v1, #T_MCR]
 
@@ -389,8 +391,9 @@ set_match3
 	; Get correct bit for MCR (bit x*3)
 	; I R S
 	; 0 1 2
-	MOV a1, #1
-	LSL a1, a1, #9			; Set Bit 9 = 1 for interrupt
+	MOV ip, #1
+	LDR a1, [v1, #T_MCR]
+	ORR a1, a1, ip, LSL #9	; Set Bit 9 = 1 for interrupt
 	ORR a1, a1, a2, LSL #10	; Set bit 10 = x for reset
 	STR a1, [v1, #T_MCR]
 
@@ -854,7 +857,7 @@ num2dec_end
 ; Lab 2 routines: Division
 ; -----------------------------------------------------------------------------
 
-; Division routine
+; Signed Division routine
 ; input:	r0 = dividend
 ;			r1 = divisor
 ; output:	r0 = quotient
@@ -921,8 +924,5 @@ is_positive
 	LDMFD r13!, {r2-r12, r14}
 	BX lr		; Return to the C program
 
-multiply_end
-	LDMFD sp!, {lr, v1-v8}
-	BX lr
 
 	END

@@ -30,6 +30,7 @@
 	IMPORT	LEVEL
 	IMPORT	CURRENT_SCORE
 	IMPORT	CURRENT_TIME
+	IMPORT	NUMBER_OF_ENEMIES
 
 	IMPORT	BEGIN_GAME
 	IMPORT	PAUSE_GAME
@@ -66,10 +67,6 @@
 	; Model routines
 	IMPORT	get_sand_at_xy
 	
-	EXPORT	debug_print1
-	EXPORT	debug_print2	
-
-
 ;;;;;;;;;;;;;;;;;;;;;
 ;	GUI ELEMENTS	;
 ;;;;;;;;;;;;;;;;;;;;;
@@ -103,6 +100,12 @@ LEVEL_val	= "000",10,13,0
 
 LIVES_str	= 27,"[8;25fLIVES:"
 LIVES_val	= "0",10,13,0
+
+ENEMIES_str	= 27,"[9;25fENEMIES:"
+ENEMIES_val	= "0",10,13,0
+
+PAUSE_str	= 27,"[18;0fX-------PAUSE-------X",0
+UNPAUSE_str	= 27,"[18;0f                     ",0
 
 BOARD_GUI
 	DCB "ZZZZZZZZZZZZZZZZZZZZZ",13,10
@@ -204,7 +207,8 @@ draw_empty_board
 	BL output_string
 	LDR v1, =LEVEL_str
 	BL output_string
-
+	LDR v1, =ENEMIES_str
+	BL output_string
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
@@ -282,12 +286,50 @@ populate_end
 update_board
 	STMFD sp!, {lr, v1-v8}
 
+	LDR v1, =PAUSE_GAME
+	LDRB v2, [v1]
+	BL pause_game_gui
+	CMP v2, #0
+	BNE gui_update_end
+
 	LDR v1, =GAME_OVER
 	LDRB v2, [v1]
 	CMP v2, #0
 	BLNE Game_over_gui
 	CMP v2, #0
 	BNE gui_update_end
+
+; 0. Erase all sprites
+; -- 0.1. Erase Fygar
+	LDR v1, =FYGAR_SPRITE_1
+	LDR a1, [v1, #OLD_X_POS]
+	LDR a2, [v1, #OLD_Y_POS]
+	MOV a3, #' '
+	BL draw_char_at_xy
+; -- 0.1. Erase Pooka1
+	LDR v1, =POOKA_SPRITE_1
+	LDR a1, [v1, #OLD_X_POS]
+	LDR a2, [v1, #OLD_Y_POS]
+	MOV a3, #' '
+	BL draw_char_at_xy
+; -- 0.1. Erase Pooka2
+	LDR v1, =POOKA_SPRITE_2
+	LDR a1, [v1, #OLD_X_POS]
+	LDR a2, [v1, #OLD_Y_POS]
+	MOV a3, #' '
+	BL draw_char_at_xy
+; -- 0.1. Erase Bullet
+	LDR v1, =PUMP_SPRITE
+	LDR a1, [v1, #OLD_X_POS]
+	LDR a2, [v1, #OLD_Y_POS]
+	MOV a3, #' '
+	BL draw_char_at_xy
+; -- 0.1. Erase Dug
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #OLD_X_POS]
+	LDR a2, [v1, #OLD_Y_POS]
+	MOV a3, #' '
+	BL draw_char_at_xy
 
 ; 1. Draw Enemies
 ; -- 1.1. Draw Fygar
@@ -366,9 +408,20 @@ update_board
 
 	LDR v1, =TIME_str
 	BL output_string
+
+	
+	LDR v1, =NUMBER_OF_ENEMIES
+	LDR a1, [v1]
+	MOV a2, #1
+	LDR v1, =ENEMIES_val
+	BL num_to_dec_str
+	LDR v1, =ENEMIES_str
+	BL output_string
+
 gui_update_end	
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
+
 
 ; Draw character at xy
 ; Draw any character on the GUI Board
@@ -422,24 +475,24 @@ draw_sprite
 	MOV v8, v1		; store sprite address in v8
 
 	; Load Old X position and clear at position
-	LDR a1, [v8, #OLD_X_POS]
-	ADD a1, a1, #GUI_X_ORIGIN
-	MOV a2, #3			; 3 char wide string
-	LDR v1, =ESC_cursor_pos_col
-	BL num_to_dec_str
+	;LDR a1, [v8, #OLD_X_POS]
+	;ADD a1, a1, #GUI_X_ORIGIN
+	;MOV a2, #3			; 3 char wide string
+	;LDR v1, =ESC_cursor_pos_col
+	;BL num_to_dec_str
 
 	; Load Old Y position and clear at position
-	LDR a1, [v8, #OLD_Y_POS]
-	ADD a1, a1, #GUI_Y_ORIGIN
-	MOV a2, #3			; 3 char wide string
-	LDR v1, =ESC_cursor_pos_line
-	BL num_to_dec_str
+	;LDR a1, [v8, #OLD_Y_POS]
+	;ADD a1, a1, #GUI_Y_ORIGIN
+	;MOV a2, #3			; 3 char wide string
+	;LDR v1, =ESC_cursor_pos_line
+	;BL num_to_dec_str
 
-	LDR v1, =ESC_cursor_position
-	BL output_string
+	;LDR v1, =ESC_cursor_position
+	;BL output_string
 	
-	MOV a1, #' '
-	BL output_character
+	;MOV a1, #' '
+	;BL output_character
 	
 	; Load X position and draw at position
 	LDR a1, [v8, #X_POS]
@@ -483,40 +536,31 @@ clear_sprite
 	LDMFD sp!, {lr, v1}
 	BX lr
 
-debug_print1
-	STMFD sp!, {lr, v1}
-	LDR v1, =DEBUG1_val
-	MOV a2, #6
-	BL num_to_dec_str
-
-	LDR v1, =DEBUG1_str
-	BL output_string
-	LDMFD sp!, {lr, v1}
-	BX lr
-debug_print2
-	STMFD sp!, {lr, v1}
-	MOV ip, a2
-	LDR v1, =DEBUG2_val1
-	MOV a2, #6
-	BL num_to_dec_str
-
-	LDR v1, =DEBUG2_val2
-	MOV a1, ip
-	MOV a2, #6
-	BL num_to_dec_str
-
-	LDR v1, =DEBUG2_str
-	BL output_string
-	LDMFD sp!, {lr, v1}
-	BX lr
-
 Game_over_gui
-	STMFD sp!, {lr, v1,a1}
+	STMFD sp!, {lr, v1}
 	MOV a1, #12
 	BL output_character
 	LDR v1, =GAME_END_GUI
 	BL output_string
-	LDMFD sp!, {lr, v1,a1}
+	LDMFD sp!, {lr, v1}
+	BX lr
+
+pause_game_gui
+	STMFD sp!, {lr, v1}
+	
+	LDR v1, =PAUSE_GAME
+	LDRB ip, [v1]
+	CMP ip, #0
+	BEQ unpause_game_gui
+
+	LDR v1, =PAUSE_str
+	BL output_string
+	BAL	end_pause_gui
+unpause_game_gui
+	LDR v1, =UNPAUSE_str
+	BL output_string
+end_pause_gui
+	LDMFD sp!, {lr, v1}
 	BX lr
 
 	END
