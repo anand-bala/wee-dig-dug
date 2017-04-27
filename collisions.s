@@ -127,40 +127,136 @@ bullet_on_wall_sand
 	STR a1, [v1, #OLD_X_POS]
 	LDR a2, [v1, #Y_POS]
 	STR a2, [v1, #OLD_Y_POS]
-	BL get_a_free_direction
-	BL move_sprite_given_dir
+	BL kill_sprite
 bullet_not_on_wall_sand
 	LDMFD sp!, {lr, v1-v4}
 	BX lr 
 
 ; Detect fatal collisions (easy case) where the attacker and victim are on the same spot
 ; A _ V --> _ A/V _
-; Attacker:	Bullet always
-; Victim:	Enemy sprite
-; INPUT:	v1 = SPRITE
+; Attacker:     Bullet always
+; Victim:       Enemy sprite (input)
+; INPUT:        v1 = SPRITE
+;
+; XXX:
+; New way to detect if coordinates are equal:
+;	1. Load X coordinate into UPPER half of register.
+;	2. Load Y coordinate into LOWER half of register.
+;	3. Repeat for second sprite
+;	4. Compare values
 ;
 ;
-; NOTE: Must be called after sprites are in new position
+; Rationale:
+;	Since the value of a coordinate along a single dimension cannot exceed 20 (worst case),
+;	all the information for a single coordinate can be stored in less than 1 byte. 
+;	So a coordinate pair can easily fit in one word (pfttt).
+
+	EXPORT	fatal_collision1_enemy
+
 fatal_collision1_enemy
 	STMFD sp!, {lr, v1-v8}
-	
-	
 
+	; Load coordinates of inputed sprite in a1
+	LDR a1, [v1, #X_POS]    ; Load X coordinate
+	LSL a1, a1, #16         ; Shift the coordinate to the upper 16 bits
+	LDR ip, [v1, #Y_POS]    ; load Y coordinate into ip
+	; WHY ip?: Because LDR will erase the contents of a1
+	ORR a1, a1, ip          ; ORR the Y coordinates into a1
+	; Now we have one coordinate pair ready. Onto the next
+
+	LDR v2, =PUMP_SPRITE
+	LDR a2, [v2, #Y_POS]    ; Load Y Coordinate
+	LDR ip, [v2, #X_POS]    ; Load X Coordinate into ip
+	ORR a2, a2, ip, LSL #16 ; Load X coordinate into upper 16 bits of a2
+	; Now our compare values are ready
+	; Compare them and check for 2 things:
+	; 1. If they are equal, its fatal
+	; 2. Else, nothing
+
+	CMP a1, a2              ; Compare a1 a2
+	BNE enemy_type1_collision_end ; If the coordinates are not equal, end
+	; else, fatal to both the bullet and the enemy
+
+; For fatal collisions.
+; 1. Kill the current sprite (v1)
+	BL kill_sprite
+; 2. Kill the bullet (v2)
+	MOV v1, v2              ; Pass v2 as argument in v1
+	BL kill_sprite
+
+enemy_type1_collision_end
 	LDMFD sp!, {lr, v1-v8}
-	BX lr
+        BX lr
 
 ; Detect fatal collisions (hard case)
 ; where the attacker and victim are not on the same spot 
 ; head on collision but they are not on the same spot due to pixels	(ugh)
 ; _ A V _ --> _ V A _
 ;
+; Since this is for the enemy sprites,
+;	Attacker:	Bullet
+;	Victim:		Given sprite
 ;
-; NOTE: call it before sprites move
+; Distance = Manhattan Distance = (x1 - x2) + (y1 - y2)
+;
+;
+; Steps:
+;	1. Check if the A and V are within 1 of each other ( distance = -1 or 1 )
+;	2. Check if old position of A == current position of V
+;	3. Check if current position of A == old position of V
+;	4. If all of the above are equal, fatal
+
+	EXPORT	fatal_collision2_enemy
+
 fatal_collision2_enemy
 	STMFD sp!, {lr, v1-v8}
-	
-	
 
+	LDR v2, =PUMP_SPRITE
+
+; 1. Check if A and V are within 1 of each other
+	LDR a1, [v1, #X_POS]	; Load X Position of v1
+	LDR ip, [v2, #X_POS]	; Load X Position of v2
+	SUB a1, a1, ip		; x_ = x(v1) - x(v2)
+
+	LDR a2, [v1, #Y_POS]	; Load Y Position of v1
+	LDR ip, [v2, #Y_POS]	; Load Y Position of v2
+	SUB a2, a2, ip		; y_ = y(v1) - y(v2)
+
+	ADD a1, a1, a2		; a1 = x_ + y_
+	CMP a1, #1		; check if distance == 1
+	CMPNE a1, #-1		; OR, check if distance == -1
+	BNE enemy_type2_collision_end	; If neither, end
+
+; 2. Check if old position of v2 == current position of v1
+	LDR a1, [v1, #Y_POS]		; Load y(v1)
+	LDR ip, [v1, #X_POS]		; Load x(v1)
+	ORR a1, a1, ip, LSL #16		; Load x(v1) into upper 16 bits of a1
+
+	LDR a2, [v2, #OLD_Y_POS]	; Load old_y(v2)
+	LDR ip, [v2, #OLD_X_POS]	; Load old_x(v2)
+	ORR a2, a2, ip, LSL #16		; Load old_x(v2) into upper 16 bits of a2
+
+	CMP a1, a2			; Compare coordinates
+	BNE enemy_type2_collision_end	; If not equal, end
+
+; 3. Check if pos(v2) == old_pos(v1)
+	LDR a1, [v1, #OLD_Y_POS]	; Load old_y(v1)
+	LDR ip, [v1, #OLD_X_POS]	; Load old_x(v1)
+	ORR a1, a1, ip, LSL #16		; Load old_x(v1) into upper 16 bits of a1
+
+	LDR a2, [v2, #Y_POS]		; Load y(v2)
+	LDR ip, [v2, #X_POS]		; Load x(v2)
+	ORR a2, a2, ip, LSL #16		; Load x(v2) into upper 16 bits of a2
+
+	CMP a1, a2			; Compare coordinates
+	BNE enemy_type2_collision_end	; If not equal, end
+
+; 4. If all pass, kill current sprite and bullet
+	BL kill_sprite			; Kill current sprite
+	MOV v1, v2			; Load PUMP_SPRITE as argument
+	BL kill_sprit			; Kill the PUMP spritee
+
+enemy_type2_collision_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
@@ -208,11 +304,12 @@ get_next_coordinate	; no need to save or restore if we arent using v1-v8 or BL
 	
 	
 ; Given an x,y, build an obstacle map and get a free direction
-; OBSTACLE MAP: 0x	00	00		00		00	 	(LITTLE ENDIAN)
-;					UP	DOWN	LEFT	RIGHT
-;					0	1		2		3
-; INPUT:	a1 = x
-;			a2 = y
+; OBSTACLE MAP: 
+;0x     00      00      00      00      (LITTLE ENDIAN)
+;       UP      DOWN    LEFT    RIGHT
+;       0       1       2       3
+; INPUT:        a1 = x
+;               a2 = y
 get_a_free_direction
 	STMFD sp!, {lr, v1-v8}
 	
@@ -221,7 +318,7 @@ get_a_free_direction
 	MOV v1, #0	; cleared map
 	MOV v4, #1	; hold 1 for storage
 
-; 1. Check for sand	around (x,y)
+; 1. Check for sand around (x,y)
 
 ; 1.1 Check to the RIGHT
 	MOV ip, #DIR_RIGHT

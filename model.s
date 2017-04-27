@@ -1388,7 +1388,7 @@ kill_sprite
 	CMP v2, #0
 	MOVLE v2, #0
 	STR v2, [v1, #LIVES]
-	; BL clear_sprite
+	BL clear_sprite
 	CMP v2, #0
 	MOVEQ v2, #100
 	STREQ v2, [v1, #X_POS]
