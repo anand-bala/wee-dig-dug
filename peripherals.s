@@ -13,6 +13,9 @@
 	IMPORT PAUSE_GAME
 	IMPORT GAME_OVER
 	IMPORT RUNNING_P
+
+FLAG
+	DCD 0
 update_peripherals
 	STMFD SP!,{lr, a1, v1,ip}
 
@@ -67,11 +70,37 @@ green
 	MOVEQ a1, #4 ; blue
 	BLEQ illuminate_RGB_LED
 	BNE check_for_shots
-check_for_shots
-	;todo
-	;LDR v1, =PUMP_SPRITE
-	;LDR ip, [v1,#LIVES]
+check_for_shots	
+	LDR v1, =PUMP_SPRITE
+	LDR ip, [v1,#LIVES]
+	CMP ip, #1
+	BEQ red_or_green
+	BNE here
+red_or_green	
+	LDR v1, =FLAG
+	LDRB ip, [v1]
+	CMP ip, #0
+	BEQ red
+	BGT green1
+green1
+  	MOV a1, #3
+	BL illuminate_RGB_LED
+	LDR v1, =FLAG
+	LDRB ip, [v1]
+	MOV ip, #0
+	STRB ip, [v1]
+	B here	
 	
+red
+	MOV a1, #2
+	BL illuminate_RGB_LED
+	LDR v1, =FLAG
+	LDRB ip, [v1]
+	MOV ip, #1
+	STRB ip, [v1]
+	B here	
+
+here	
 	B exit
 check_game_over
 	LDR v1, =GAME_OVER
