@@ -16,7 +16,10 @@
 	IMPORT	BULLET_TYPE
 
 	IMPORT	PUMP_SPRITE
-
+	IMPORT	DUG_SPRITE
+	IMPORT	FYGAR_SPRITE_1
+	IMPORT	POOKA_SPRITE_1
+	IMPORT	POOKA_SPRITE_2
 
 	IMPORT	get_sand_at_xy
 
@@ -97,8 +100,8 @@ enemy_not_on_wall_sand
 
 ; Detect collision of bullet with sand or wall
 ; Steps:
-; 1. Check if enemy is on the wall or next move is on the wall
-; 2. If so, create a map of place around it and pick a free spot
+; 1. Check if bullet is on the wall or next move is on the wall
+; 2. If yes, kill bullet
 ; 3. Else, don' actually care
 bullet_collision_with_sand_wall
 	STMFD sp!, {lr, v1-v4}
@@ -262,11 +265,73 @@ enemy_type2_collision_end
 
 ; Detect fatal collisions (easy case) where the attacker and victim are on the same spot
 ; A _ V --> _ A/V _
+;
+; To check for TYPE1 fatal collision for DUG, the attacker can be either FYGAR, POOKA1 or POOKA2.
+; So we need to see if any one of them have the same coordinates as DUG.
+;
+; NO INPUTS
+;
 fatal_collision1_dug
 	STMFD sp!, {lr, v1-v8}
-	
-	
 
+;	DEV RULES:
+;	v1 = DUG
+;	a1 = DUG coordinates
+;	v2 = Other sprite
+;	a2 = coordinates of other sprite
+;	ip = intermediate values (dont use for anything signigicant)
+
+; 0.	Load DUG into v1 and his coordinates into a1
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #Y_POS]		; Load Y into a1
+	LDR ip, [v1, #X_POS]		; Load X into ip
+	ORR a1, a1, ip, LSL #16		; Load X into upper half of a1
+
+; 1.	Check if collision with FYGAR
+; 1.1.	Load FYGAR and his coordinates
+	LDR v2, =FYGAR_SPRITE_1
+	LDR a2, [v2, #Y_POS]		; Load Y into a2
+	LDR ip, [v2, #X_POS]		; Load X into ip
+	ORR a2, a2, ip, LSL #16		; Load X into upper half of a2
+; 1.2.	Compare a1 and a2. If equal, the thing is fatal
+	CMP a1, a2
+	BEQ dug_type1_collision_fatal	; EQ => fatal
+
+; 2.	Check if collision with POOKA1
+; 2.1.	Load POOKA1 and its coordinates
+	LDR v2, =POOKA_SPRITE_1
+	LDR a2, [v2, #Y_POS]		; Load Y into a2
+	LDR ip, [v2, #X_POS]		; Load X into ip
+	ORR a2, a2, ip, LSL #16		; Load X into upper half of a2
+; 2.2.	Compare a1 and a2. If equal, the thing is fatal
+	CMP a1, a2
+	BEQ dug_type1_collision_fatal	; EQ => fatal
+
+; 3.	Check if collision with POOKA2
+; 3.1.	Load POOKA2 and his coordinates
+	LDR v2, =POOKA_SPRITE_2
+	LDR a2, [v2, #Y_POS]		; Load Y into a2
+	LDR ip, [v2, #X_POS]		; Load X into ip
+	ORR a2, a2, ip, LSL #16		; Load X into upper half of a2
+; 3.2.	Compare a1 and a2. If equal, the thing is fatal
+	CMP a1, a2
+	BEQ dug_type1_collision_fatal	; EQ => fatal
+
+; If nothing is colliding, just end
+	BAL dug_type1_collision_end
+; ELSE: FATAL!!!!
+dug_type1_collision_fatal
+; If fatal, do the following:
+; 1. Kill DUG
+; 2. respawn DUG and other sprites
+; 3. Check if Game Over: Trigger Game Over
+
+	BL kill_sprite
+	BL respawn_game_sprites
+	LDR ip, [v1, #LIVES]
+	CMP ip, #0
+	BLEQ model_game_over
+dug_type1_collision_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
@@ -274,11 +339,101 @@ fatal_collision1_dug
 ; where the attacker and victim are not on the same spot 
 ; head on collision but they are not on the same spot due to pixels	(ugh)
 ; _ A V _ --> _ V A _
+; For each enemy:
+; 1. Check if old_pos(A) == cur_pos(V)
+; 2. && Check if old_pos(V) == cur_pos(A)
+; 3. If so, fatal
+; 4. Else, do nothing
+;
+;
+; NO INPUT
 fatal_collision2_dug
 	STMFD sp!, {lr, v1-v8}
-	
-	
 
+; DEV RULES:
+;	v1 = DUG SPRITE
+;	a1 = DUG's current position
+;	a2 = DUG's old position
+;
+;	v2 = Other Sprites
+;	a3 = Current position
+;	a4 = Old Position
+
+; 0.	Load DUG into v1 and coordinates into a1
+	LDR v1, =DUG_SPRITE
+
+	LDR a1, [v1, #Y_POS]
+	LDR ip, [v1, #X_POS]
+	ORR a1, a1, ip, LSL #16		; Load DUG's coordinates into a1
+
+	LDR a2, [v1, #OLD_Y_POS]
+	LDR ip, [v1, #OLD_X_POS]
+	ORR a2, a2, ip, LSL #16		; Load DUG's old coordinates into a2
+
+; 1.	Check for collision with FYGAR
+; 1.1.	Load FYGAR's coordinates, old and current
+	LDR v2, =FYGAR_SPRITE_1
+
+	LDR a3, [v2, #Y_POS]
+	LDR ip, [v2, #X_POS]
+	ORR a3, a3, ip, LSL #16		; Load current coordinates into a3
+
+	LDR a4, [v2, #OLD_Y_POS]
+	LDR ip, [v2, #OLD_X_POS]
+	ORR a4, a4, ip, LSL #16		; Load old coordinates into a4
+
+; 1.2.	Compare coordinates
+	CMP a1, a4			; Compare cur_pos(v1) & old_pos(v2)
+	CMPEQ a2, a3			; If equal, compare old_pos(v1) & cur_pos(v2)
+	BEQ dug_type2_collision_fatal	; If both are equal, fatal
+	; Else check the next sprite
+; 2.	Check for collision with POOKA1
+; 2.1.	Load POOKA1's coordinates, old and current
+	LDR v2, =POOKA_SPRITE_1
+
+	LDR a3, [v2, #Y_POS]
+	LDR ip, [v2, #X_POS]
+	ORR a3, a3, ip, LSL #16		; Load current coordinates into a3
+
+	LDR a4, [v2, #OLD_Y_POS]
+	LDR ip, [v2, #OLD_X_POS]
+	ORR a4, a4, ip, LSL #16		; Load old coordinates into a4
+
+; 2.2.	Compare coordinates
+	CMP a1, a4			; Compare cur_pos(v1) & old_pos(v2)
+	CMPEQ a2, a3			; If equal, compare old_pos(v1) & cur_pos(v2)
+	BEQ dug_type2_collision_fatal	; If both are equal, fatal
+	; Else check the next sprite
+; 3.	Check for collision with POOKA2
+; 3.1.	Load POOKA2's coordinates, old and current
+	LDR v2, =POOKA_SPRITE_2
+
+	LDR a3, [v2, #Y_POS]
+	LDR ip, [v2, #X_POS]
+	ORR a3, a3, ip, LSL #16		; Load current coordinates into a3
+
+	LDR a4, [v2, #OLD_Y_POS]
+	LDR ip, [v2, #OLD_X_POS]
+	ORR a4, a4, ip, LSL #16		; Load old coordinates into a4
+
+; 3.2.	Compare coordinates
+	CMP a1, a4			; Compare cur_pos(v1) & old_pos(v2)
+	CMPEQ a2, a3			; If equal, compare old_pos(v1) & cur_pos(v2)
+	BEQ dug_type2_collision_fatal	; If both are equal, fatal
+	; Else end (coz no more sprites)
+	BAL dug_type2_collision_end 
+
+dug_type2_collision_fatal
+; So, collision was fatal. What are we going to do?
+; 1. Kill DUG.
+; 2. Respawn dug
+; 3. Check if game over: trigger game over
+	BL kill_sprite
+	BL respawn_game_sprites
+	LDR ip, [v1, #LIVES]
+	CMP ip, #0
+	BLEQ model_game_over
+dug_type2_collision_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
