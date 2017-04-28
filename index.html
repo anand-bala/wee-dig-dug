@@ -1,23 +1,68 @@
 <meta charset="utf-8">
 
+**Wee Dig Dug**
 
-**Wee Dig Dug: Design**
+__Created by__:
+[Anand Balakrishnan](https://anand-bala.github.io)
+and
+Amrit Pal Singh
 
-# Overview
+Welcome to **Wee Dig Dug**, a simplified text-based version of the popular arcade game **Dig Dug** by Namco!.
+The following project was written in ARM Assembly for the LPC2138 Education Board, with the ARM7TDMI architecture.
+
+
+# User Guide
+
+## Setup
+
+Before playing the game, please make sure of the following:
+
+1. You are connected to the correct COM port on PuTTy, and at a baud rate of **115200 baud**.
+2. Resize the console window to a minimum of $30$ rows $\times$ $30$ columns.
+3. Just enjoy the game.
+
+To start playing, just flash the code onto the LPC2138 board.
+
+## Instructions
+
+You are the characte ___Dug___ and your job is to :
+
+1. Dig through as much of the sand as you can.
+2. Kill all enemies.
+3. **You must kill all the enemies withing 2 minutes to proceed to the next level**.
+
+You can move ___Dug___ using the `W,A,S,D` keys which correspond to `UP,DOWN,LEFT,RIGHT` respectively and
+shoot your bullet using `SPACEBAR`.
+You can use the 5th Push Button to `PAUSE` the game whenever you want.
+
+# Developer Guide
+
+
+
+# Design
 
 The game is designed similar to a **Model-View-Controller (MVC)** framework.
 This architecture is a common way of designing applications with a User Interface.
-A **MVC** framework works in the following way:
+According to this, each component is responsible for a particular task, and only that component is allowed to perform that task.
 
-* Each component is responsible for a particular task, and only that component is allowed to perform that task.
-* The **Model** is the internal representation of the application, and it is responsible to maintain the state of the application at any time.
-* The **View** is the GUI. It works by reading the **Model** and displaying the graphical representation of the model on the screen.
-* The **Controller** is the component that is responsible for listening to user input and updating the model accordingly.
-* **MVC** components interact with each other the following way:
+**Model**
+:   This is the part of the framework responsible for maintainin the internal representation of the application.
 
-`TODO: Insert MVC image`
+    The **Model** in this game holds the location where sand is present, state of each sprite and state variables of the game.
 
-# Controller (controller.s)
+**View**
+:   The **View** is responsible for rendering the **Model** onto the GUI. 
+    It contains routines that display the board, the sprites and the sand on a console screen.
+
+**Controller**
+:   The **Controller** is responsible for handling user input and triggering changes in the **Model**.
+    It contains the entry point for the game and interrupt handlers.
+
+![Figure [mvc-process]: The components of the framework interacting with each other (courtsey: Wikipdia)](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/MVC-Process.svg/1200px-MVC-Process.svg.png width="50%")
+
+## Controller
+
+**FILES**: controller.s
 
 The **Controller** mainly contains interrupt handlers, and it is also the entry point for the game.
 In is, we do the following:
@@ -28,20 +73,22 @@ In is, we do the following:
 
 The controller is a relatively small component, responsible mainly for updating the **Model** via subroutines exposed by the **Model**.
 
-# Model (model.s)
+## Model 
+
+**FILES**: `model.s`
 
 The **Model** maintains the internal representation of the board and triggers **View** updates. It exposed routines that allows the
 **Controller** to trigger updates on the **Model**.
 
-## Implementation
+### Implementation
 
 The **Model** consists of an ___"array"___ (created using the `FILL` directive) of size $19 \times 15$ bytes, each byte representing a grain
 of sand.
 
-The **Model** also consists of `DCD` tables to hold information of sprites. These tables are structured similar to **C `struct`s**.
+The **Model** also consists of `DCD` tables to hold information of sprites. These tables are structured similar to a `struct`.
 They look like this:
 
-```
+```no-highlight
 SPRITE
 	DCD [0-18]	; Holds X coordinate of the sprite
 	DCD [0-14]	; Holds Y coordinate of the sprite
@@ -56,7 +103,7 @@ SPRITE
 There are also staticaly defined regions of memory that keep track of the various states the game could possibly be in, for example, `PAUSE`, `GAME_OVER`.
 The **Model** is also responsible for keeping track of other variables of the game, such as, `LEVEL`, `HIGH_SCORE`, `CURRENT_SCORE` and `TIME`.
 
-## Operations
+### Operations
 
 Operations that are defined by the **Model** are:
 
@@ -69,18 +116,28 @@ Operations that are defined by the **Model** are:
 * Update individual sprites.
 * Spawn sprites.
 
-## 
 
+## View 
+
+**FILES**: `gui.s`, `peripherals.s`
+
+
+The **View** is responsible for rendering **Model** onto the GUI. It possessed routines that
+the **Model** uses to trigger updates to the GUI. This implementation was chosen as updates can
+be triggered as and when the **Model** is updates.
+
+### Implementation
 
 
 <!-- <link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/latex.css"> -->
+<!-- <link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/dark.css"> -->
 <!-- Markdeep: -->
 <style class="fallback">body{visibility:hidden}</style>
 <script>
 	window.markdeepOptions = {
-		tocStyle: 'long',
+		tocStyle: 'long,
 		detectMath: true,
-		mode: 'html'
+		showURLs: true
 	}
 </script>
 <script src="https://casual-effects.com/markdeep/latest/markdeep.min.js?"></script>
