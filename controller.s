@@ -97,6 +97,7 @@
 	IMPORT	sand_collision_dug
 	IMPORT	wall_collision_dug
 	IMPORT	get_a_free_direction
+	IMPORT	model_game_over
 
 ONE_SEC		EQU 0x1194000
 HALF_SEC	EQU	0x08CA000
@@ -246,9 +247,15 @@ MR1_Interrupt
 
 		LDR v1, =CURRENT_TIME
 		LDR v2, [v1]
+		LSR v2, v2, #1
 		BL get_match1
-		SUB a1, v2, a1
+		SUB a1, v2, a1, LSR #1
+		CMP a1, #0
+		MOVLE a1, #0
+
+		LSL a1, a1, #1
 		STR a1, [v1]
+		
 		
 MR1_end
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr

@@ -198,8 +198,14 @@ GAME_END_GUI
 	DCB "|-----------------------------------------|",13,10
 	DCB "|You have DIED!                           |",13,10
 	DCB "|Press R to retry.                        |",13,10
-	DCB "|Press Q to quit and go back to your life.|",13,10
-	DCB "|-----------------------------------------|",13,10,0
+	DCB "|-----------------------------------------|",13,10
+	DCB	"SCORE: "
+END_SCORE_val
+	DCB	"000000",10,13
+	DCB	"HIGH SCORE: "
+END_HIGH_SCORE_val
+	DCB	"000000",10,13,0
+
 
 	ALIGN
 
@@ -594,6 +600,19 @@ Game_over_gui
 	STMFD sp!, {lr, v1}
 	MOV a1, #12
 	BL output_character
+
+	LDR v1, =CURRENT_SCORE
+	LDR a1, [v1]
+	LDR v1, =END_SCORE_val
+	MOV a2, #6
+	BL num_to_dec_str
+
+	LDR v1, =HIGH_SCORE
+	LDR a1, [v1]
+	LDR v1, =END_HIGH_SCORE_val
+	MOV a2, #6
+	BL num_to_dec_str
+
 	LDR v1, =GAME_END_GUI
 	BL output_string
 	LDMFD sp!, {lr, v1}

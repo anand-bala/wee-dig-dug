@@ -469,8 +469,6 @@ model_game_over
 	BL disable_timer0
 
 	BL reset_model
-	; TODO: GUI Update
-	; TODO: Peripheral Update
 
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
@@ -700,13 +698,14 @@ post_movement_update
 	LDR v1, =DUG_SPRITE
 	BL fatal_collision1_dug
 	BL fatal_collision2_dug
-
+   	
 	LDR v1, =CURRENT_TIME
-	LDR v2, [v1]
-	CMP v2, #0			; if timer reached 0
-	BLEQ model_game_over
-	CMP v2, #0
-	BEQ end_dont_update
+	LDR a1, [v1]
+	LSR a1, a1, #1
+	CMP a1, #0			; if timer reached 0
+	BGT end_model_update
+	BL model_game_over
+
 end_model_update
 ; Trigger GUI updates
 	BL update_board
