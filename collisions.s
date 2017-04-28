@@ -22,8 +22,15 @@
 	IMPORT	POOKA_SPRITE_2
 
 	IMPORT	get_sand_at_xy
+	IMPORT	kill_sprite
+	IMPORT	model_game_over
+	IMPORT	respawn_game_sprites
+	IMPORT	clear_at_x_y
+	IMPORT	modify_score
 
 	IMPORT	get_nbit_rand
+
+	IMPORT	NUMBER_OF_ENEMIES
 
 DIR_UP		EQU	0
 DIR_DOWN	EQU 1
@@ -61,29 +68,6 @@ enemy_collision_with_sand_wall
 	CMP a1, #1					; check if there is sand where the sprite is
 	BEQ enemy_on_wall_sand		; if there is, enemy is sitting on sand
 
-; 1.2.1 Check if next movement will put enemy on wall
-	LDR a1, [v1, #X_POS]		; Get x coord
-	LDR a2, [v1, #Y_POS]		; Get y coord
-	LDR a3, [v1, #DIRECTION]	; Get direction
-	BL get_next_coordinate		; Get the next coordinate (x', y')
-	
-	CMP a1, #-1	  				; Check if x' == -1
-	CMPNE a1, #BOARD_WIDTH	   	; || Check if x' == 19
-	BEQ enemy_will_be_on_wall_sand		; If either, enemy will be sitting on the wall
-
-	CMP a2, #-1	  				; Check if y' == -1
-	CMPNE a2, #BOARD_HEIGHT	   	; || Check if y' == BOARD_HEIGHT
-	BEQ enemy_will_be_on_wall_sand		; If either, enemy will be sitting on the wall
-
-; 1.2.2 Check if next movement will put enemy on sand
-	LDR a1, [v1, #X_POS]		; Get x coord
-	LDR a2, [v1, #Y_POS]		; Get y coord
-	LDR a3, [v1, #DIRECTION]	; Get direction
-	BL get_next_coordinate		; Get the next coordinate (x', y')
-	BL get_sand_at_xy			; get sand at x' y'
-	CMP a1, #1					; if there is sand
-	BEQ enemy_will_be_on_wall_sand		; enemy will be there soon
-
 	BAL enemy_not_on_wall_sand
 enemy_on_wall_sand
 	; Move to old position
@@ -91,7 +75,6 @@ enemy_on_wall_sand
 	STR a1, [v1, #X_POS]
 	LDR a2, [v1, #OLD_Y_POS]
 	STR a2, [v1, #Y_POS]
-enemy_will_be_on_wall_sand
 	BL get_a_free_direction
 	BL move_sprite_given_dir
 enemy_not_on_wall_sand
@@ -103,6 +86,9 @@ enemy_not_on_wall_sand
 ; 1. Check if bullet is on the wall or next move is on the wall
 ; 2. If yes, kill bullet
 ; 3. Else, don' actually care
+	
+	EXPORT	bullet_collision_with_sand_wall
+
 bullet_collision_with_sand_wall
 	STMFD sp!, {lr, v1-v4}
 	LDR v1, =PUMP_SPRITE
@@ -124,12 +110,14 @@ bullet_collision_with_sand_wall
 	CMP a1, #1					; check if there is sand where the sprite is
 	BEQ bullet_on_wall_sand		; if there is, enemy is sitting on sand
 
+; Else, end
+	BAL bullet_not_on_wall_sand
 bullet_on_wall_sand
 	; KILL IT
-	LDR a1, [v1, #X_POS]
-	STR a1, [v1, #OLD_X_POS]
-	LDR a2, [v1, #Y_POS]
-	STR a2, [v1, #OLD_Y_POS]
+	LDR a1, [v1, #OLD_X_POS]
+	STR a1, [v1, #X_POS]
+	LDR a2, [v1, #OLD_Y_POS]
+	STR a2, [v1, #Y_POS]
 	BL kill_sprite
 bullet_not_on_wall_sand
 	LDMFD sp!, {lr, v1-v4}
@@ -181,8 +169,21 @@ fatal_collision1_enemy
 	; else, fatal to both the bullet and the enemy
 
 ; For fatal collisions.
-; 1. Kill the current sprite (v1)
+; 1.	Kill the current sprite (v1)
 	BL kill_sprite
+; 1.1	Increment score according to type
+	LDR ip, [v1, #SPRITE_TYPE]
+	CMP ip, #POOKA_TYPE
+	MOVEQ a1, #1
+	CMP ip, #FYGAR_TYPE
+	MOVEQ a1, #2
+	BL modify_score
+; 1.2	Decrement number of enemies
+	LDR v3, =NUMBER_OF_ENEMIES
+	LDR ip, [v3]
+	SUB ip, ip, #1
+	STR ip, [v3]
+
 ; 2. Kill the bullet (v2)
 	MOV v1, v2              ; Pass v2 as argument in v1
 	BL kill_sprite
@@ -256,8 +257,21 @@ fatal_collision2_enemy
 
 ; 4. If all pass, kill current sprite and bullet
 	BL kill_sprite			; Kill current sprite
+; 4.1	Increment score according to type
+	LDR ip, [v1, #SPRITE_TYPE]
+	CMP ip, #POOKA_TYPE
+	MOVEQ a1, #1
+	CMP ip, #FYGAR_TYPE
+	MOVEQ a1, #2
+	BL modify_score
+; 4.2	Decrement number of enemies
+	LDR v3, =NUMBER_OF_ENEMIES
+	LDR ip, [v3]
+	SUB ip, ip, #1
+	STR ip, [v3]
+; 4.3 Kill Bullet
 	MOV v1, v2			; Load PUMP_SPRITE as argument
-	BL kill_sprit			; Kill the PUMP spritee
+	BL kill_sprite			; Kill the PUMP spritee
 
 enemy_type2_collision_end
 	LDMFD sp!, {lr, v1-v8}
@@ -271,6 +285,9 @@ enemy_type2_collision_end
 ;
 ; NO INPUTS
 ;
+
+	EXPORT	fatal_collision1_dug
+
 fatal_collision1_dug
 	STMFD sp!, {lr, v1-v8}
 
@@ -347,6 +364,9 @@ dug_type1_collision_end
 ;
 ;
 ; NO INPUT
+
+	EXPORT	fatal_collision2_dug
+
 fatal_collision2_dug
 	STMFD sp!, {lr, v1-v8}
 
@@ -437,6 +457,70 @@ dug_type2_collision_end
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
+
+; Dug collision with sand
+;
+;
+; If Dug is on sand, remove sand and increment score
+
+	EXPORT	sand_collision_dug
+
+sand_collision_dug
+	STMFD sp!, {lr, v1-v4}
+
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	BL get_sand_at_xy
+	CMP a1, #0
+	BEQ	sand_collision_dug_end
+
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+	BL clear_at_x_y
+
+	MOV a1, #0
+	BL modify_score
+
+sand_collision_dug_end
+	LDMFD sp!, {lr, v1-v4}
+	BX lr
+
+; Dug collision with wall
+;
+;
+; If Dug is on wall, move Dug back
+
+	EXPORT	wall_collision_dug
+wall_collision_dug
+	STMFD sp!, {lr, v1-v4}
+	
+	LDR v1, =DUG_SPRITE
+	LDR a1, [v1, #X_POS]
+	LDR a2, [v1, #Y_POS]
+
+	CMP a1, #-1
+	CMPNE a1, #BOARD_WIDTH	; If x(DUG) == -1 || x(DUG) == width
+	BEQ	wall_collision_dug_true
+
+	CMP a2, #-1
+	CMPNE a2, #BOARD_HEIGHT	; If y(DUG) == -1 || y(DUG) == height
+	BEQ	wall_collision_dug_true
+
+	; If not collided with wall, end
+	BAL wall_collision_dug_end
+
+wall_collision_dug_true
+	; Set to old position
+	LDR a1, [v1, #OLD_X_POS]
+	STR a1, [v1, #X_POS]
+	LDR a2, [v1, #OLD_Y_POS]
+	STR a2, [v1, #Y_POS]
+
+wall_collision_dug_end
+	LDMFD sp!, {lr, v1-v4}
+	BX lr
+
 ; Given x, y, and direction, get the next position a sprite will move to
 ; INPUT:	a1 = x
 ;			a2 = y
@@ -465,6 +549,9 @@ get_next_coordinate	; no need to save or restore if we arent using v1-v8 or BL
 ;       0       1       2       3
 ; INPUT:        a1 = x
 ;               a2 = y
+
+	EXPORT	get_a_free_direction
+
 get_a_free_direction
 	STMFD sp!, {lr, v1-v8}
 	
@@ -476,32 +563,32 @@ get_a_free_direction
 ; 1. Check for sand around (x,y)
 
 ; 1.1 Check to the RIGHT
-	MOV ip, #DIR_RIGHT
-	LSL ip, ip, #3			; use ip as byte offset
+	MOV v4, #DIR_RIGHT
+	LSL v4, v4, #3			; use ip as byte offset
 	ADD a1, v2, #1	; x + 1
 	MOV a2, v3		; y
 	BL get_sand_at_xy	; get sand at (x + 1, y)
-	ORR v1, v1, a1, LSL ip	; set 3rd byte to value of sand
+	ORR v1, v1, a1, LSL v4	; set 3rd byte to value of sand
 ; 1.1 Check to the LEFT
-	MOV ip, #DIR_LEFT
-	LSL ip, ip, #3			; use ip as byte offset
+	MOV v4, #DIR_LEFT
+	LSL v4, v4, #3			; use ip as byte offset
 	SUB a1, v2, #1	; x - 1
 	MOV a2, v3		; y
 	BL get_sand_at_xy	; get sand at (x - 1, y)
-	ORR v1, v1, a1, LSL ip	; set 3rd byte to value of sand
+	ORR v1, v1, a1, LSL v4	; set 3rd byte to value of sand
 ; 1.1 Check to the UP
-	MOV ip, #DIR_UP
-	LSL ip, ip, #3			; use ip as byte offset
+	MOV v4, #DIR_UP
+	LSL v4, v4, #3			; use ip as byte offset
 	MOV a1, v2		; x
 	SUB a2, v3, #1	; y - 1
 	BL get_sand_at_xy	; get sand at (x, y - 1)
-	ORR v1, v1, a1, LSL ip	; set 3rd byte to value of sand
+	ORR v1, v1, a1, LSL v4	; set 3rd byte to value of sand
 ; 1.1 Check to the DOWN
-	MOV ip, #DIR_DOWN
-	LSL ip, ip, #3			; use ip as byte offset	MOV a1, v2		; x
+	MOV v4, #DIR_DOWN
+	LSL v4, v4, #3			; use ip as byte offset	MOV a1, v2		; x
 	ADD a2, v3, #1	; y + 1
 	BL get_sand_at_xy	; get sand at (x, y + 1)
-	ORR v1, v1, a1, LSL ip	; set 3rd byte to value of sand
+	ORR v1, v1, a1, LSL v4	; set 3rd byte to value of sand
 
 ; 2. 	Check for walls around sprite
 	MOV a1, #1
@@ -567,11 +654,13 @@ get_a_free_direction
 
 ; Return a OK direction to go based on map	(randomly may do it	?)
 	MOV a1, #0
+	MOV a2, #0
 obstacle_map_loop
-	LSR ip, v1, a1		; set random byte in map as 0th byte
+	LSR ip, v1, a2		; set random byte in map as 0th byte
 	AND ip, ip, #0xF	; isolate the first byte
-	ADD a1, a1, #1
 	CMP ip, #0			; check if the direction is free
+	ADDNE a1, a1, #1
+	ADDNE a2, a2, #8
 	BNE obstacle_map_loop	; if not free, check again
 	; else return direction in a1
 	LDMFD sp!, {lr, v1-v8}
@@ -588,8 +677,8 @@ move_sprite_given_dir
 	STR a1, [v1, #OLD_X_POS]
 	LDR a2, [v1, #Y_POS]
 	STR a2, [v1, #OLD_Y_POS]
-	BL get_next_coordinate
-	
+	BL get_next_coordinate	
+
 	STR a1, [v1, #X_POS] 
 	STR a2, [v1, #Y_POS] 
 	STR a3, [v1, #DIRECTION] 
