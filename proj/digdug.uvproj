@@ -416,14 +416,14 @@
               <FilePath>..\Startup.s</FilePath>
             </File>
             <File>
-              <FileName>sprites.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>..\sprites.s</FilePath>
-            </File>
-            <File>
               <FileName>peripherals.s</FileName>
               <FileType>2</FileType>
               <FilePath>..\peripherals.s</FilePath>
+            </File>
+            <File>
+              <FileName>collisions.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>..\collisions.s</FilePath>
             </File>
           </Files>
         </Group>

@@ -16,6 +16,7 @@
 	IMPORT	get_match0
 	IMPORT	get_match1
 	IMPORT	reset_timer0
+	IMPORT	disable_timer0
 
 	IMPORT	clear_7_seg
 	IMPORT	display_digit_on_7_seg
@@ -46,7 +47,6 @@
 	IMPORT	just_fygar_update
 	IMPORT	toggle_pause_game
 	IMPORT	init_model
-	IMPORT	handle_and_detect_all
 
 	IMPORT	DUG_SPRITE
 	IMPORT	FYGAR_SPRITE_1
@@ -77,11 +77,23 @@
 	EXPORT	TIMER_100ms	
 	EXPORT	TIME_120s
 
-	IMPORT GAME_BEGIN_GUI
+	IMPORT	GAME_BEGIN_GUI
 	
-	IMPORT set_level_disp
+	IMPORT	set_level_disp
+	IMPORT	div_and_mod
 
 	EXPORT	RUN_P
+
+	IMPORT	enemy_collision_with_sand_wall
+	IMPORT	fatal_collision1_enemy
+	IMPORT	fatal_collision2_enemy
+	IMPORT	fatal_collision1_dug
+	IMPORT	fatal_collision2_dug
+	IMPORT	bullet_collision_with_sand_wall
+	IMPORT	move_sprite_given_dir
+	IMPORT	sand_collision_dug
+	IMPORT	wall_collision_dug
+	IMPORT	get_a_free_direction
 
 ONE_SEC		EQU 0x1194000
 HALF_SEC	EQU	0x08CA000
@@ -98,7 +110,9 @@ weedigdug
 	STMFD sp!, {lr}
 	BL pin_connect_block_setup
 	BL uart_init
-
+	LDR a1, =0x83D60000
+	LDR a2, =0x1194000
+	BL div_and_mod
 ; Begin GAME
 begin_game
 	MOV a1, #12
@@ -109,7 +123,7 @@ begin_game
 	BL timer_init
 	BL read_character
 
-  BL interrupt_init
+ 	BL interrupt_init
 	BL init_model
 
 	; Set MR1 to half sec and reset it
@@ -121,7 +135,7 @@ begin_game
 	LDR a1, =HALF_SEC
 	LSR a1, a1, #1
 	MOV a2, #0
-	;BL set_match0
+	BL set_match0
 
 	BL reset_timer0
 	
@@ -136,11 +150,13 @@ game_loop
 	BEQ game_loop	; if GAME_OVER = 0: loop
 
 	; Wait for user to restart game
+	BL disable_timer0
 	LDR v1, =BEGIN_GAME
 game_over_end_loop
 	LDRB ip, [v1]
 	CMP ip, #0
 	BEQ game_over_end_loop	; if game hasnt begun yet, wait
+
 	BAL begin_game
 
 	LDMFD sp!, {lr}
@@ -175,10 +191,29 @@ MR0_Interrupt
 		LDR v1, =RUNNING_P
 		LDRB ip, [v1]
 		CMP ip, #0
-		BEQ MR1_end
+		BEQ MR0_end
 		BL just_fygar_update
-		BL just_update_bullet
-		BL handle_and_detect_all
+		;BL just_update_bullet
+
+		; Detect and handle collisions
+		LDR v1, =FYGAR_SPRITE_1
+		BL fatal_collision1_enemy
+		BL fatal_collision2_enemy
+ ;
+;		LDR v1, =POOKA_SPRITE_1
+;		BL fatal_collision1_enemy
+;		BL fatal_collision2_enemy
+ ;
+;		LDR v1, =POOKA_SPRITE_2
+;		BL fatal_collision1_enemy
+;		BL fatal_collision2_enemy
+ ;
+		LDR v1, =PUMP_SPRITE
+		BL bullet_collision_with_sand_wall
+
+		LDR v1, =DUG_SPRITE
+		BL fatal_collision1_dug
+		BL fatal_collision2_dug
 MR0_end
 		BL update_board
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
@@ -199,14 +234,14 @@ MR1_Interrupt
 		LDRB ip, [v1]
 		CMP ip, #0
 		BEQ MR1_end
-		
-MR1_end
+		BL update_model
+
 		LDR v1, =CURRENT_TIME
 		LDR ip, [v1]
 		BL get_match1
 		ADD a1, a1, ip
-
-		BL update_model
+		
+MR1_end
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
 
 		ORR r1, r1, #2		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #2
@@ -222,7 +257,6 @@ EINT1_interrupt	; Check for EINT1 interrupt
 
 		; Push button EINT1 Handling Code
 		BL toggle_pause_game
-		BL update_model
 EINT1_end
 
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
@@ -301,6 +335,7 @@ KEY_RIGHT
 		BAL	U0RDA_update
 
 ENTER_PRESS
+		;BL toggle_pause_game
 		BAL U0RDA_end
 SPACEBAR_PRESS
 		BL spawn_bullet
