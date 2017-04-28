@@ -57,7 +57,7 @@ enemy_collision_with_sand_wall
 	BEQ enemy_on_wall_sand		; If either, enemy is sitting on the wall
 
 	LDR ip, [v1, #Y_POS]
-	CMP ip, #-1	  				; Check if y == -1
+	CMP ip, #0	  				; Check if y == 0
 	CMPNE ip, #BOARD_HEIGHT	   	; || Check if y == BOARD_HEIGHT
 	BEQ enemy_on_wall_sand		; If either, enemy is sitting on the wall
 
@@ -99,7 +99,7 @@ bullet_collision_with_sand_wall
 	BEQ bullet_on_wall_sand		; If either, enemy is sitting on the wall
 
 	LDR ip, [v1, #Y_POS]
-	CMP ip, #-1	  				; Check if y == -1
+	CMP ip, #0	  				; Check if y == -1
 	CMPNE ip, #BOARD_HEIGHT	   	; || Check if y == BOARD_HEIGHT
 	BEQ bullet_on_wall_sand		; If either, enemy is sitting on the wall
 
@@ -503,7 +503,7 @@ wall_collision_dug
 	CMPNE a1, #BOARD_WIDTH	; If x(DUG) == -1 || x(DUG) == width
 	BEQ	wall_collision_dug_true
 
-	CMP a2, #-1
+	CMP a2, #0
 	CMPNE a2, #BOARD_HEIGHT	; If y(DUG) == -1 || y(DUG) == height
 	BEQ	wall_collision_dug_true
 
@@ -605,7 +605,7 @@ get_a_free_direction
 ; 2.3	Check for wall at (x , y + 1) UP
 	MOV ip, #DIR_UP
 	LSL ip, ip, #3
-	CMP v3, #0
+	CMP v3, #1
 	ORREQ v1, v1, a1, LSL ip		; set 0th bit to 1 for wall
 ; 2.4	Check for wall at (x, y - 1) DOWN
 	MOV ip, #DIR_DOWN
@@ -656,6 +656,7 @@ get_a_free_direction
 	MOV a1, #0
 	MOV a2, #0
 obstacle_map_loop
+	;BL get_nbit_rand
 	LSR ip, v1, a2		; set random byte in map as 0th byte
 	AND ip, ip, #0xF	; isolate the first byte
 	CMP ip, #0			; check if the direction is free
@@ -663,6 +664,8 @@ obstacle_map_loop
 	ADDNE a2, a2, #8
 	BNE obstacle_map_loop	; if not free, check again
 	; else return direction in a1
+
+
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 

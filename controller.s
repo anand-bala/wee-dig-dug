@@ -78,9 +78,12 @@
 	EXPORT	TIME_120s
 
 	IMPORT	GAME_BEGIN_GUI
+	IMPORT	GAME_CONTROLS_GUI
 	
 	IMPORT	set_level_disp
 	IMPORT	div_and_mod
+	IMPORT	disable_timer_interrupts
+	IMPORT	set_random_seed
 
 	EXPORT	RUN_P
 
@@ -110,8 +113,8 @@ weedigdug
 	STMFD sp!, {lr}
 	BL pin_connect_block_setup
 	BL uart_init
-	LDR a1, =0x83D60000
-	LDR a2, =0x1194000
+	LDR a1, =0x83D60
+	LDR a2, =0x1194
 	BL div_and_mod
 ; Begin GAME
 begin_game
@@ -119,13 +122,16 @@ begin_game
 	BL output_character
 	LDR v1, =GAME_BEGIN_GUI
 	BL output_string
-	
+	LDR v1, =GAME_CONTROLS_GUI
+	BL output_string
+
+ 	BL interrupt_init
 	BL timer_init
 	BL read_character
 
- 	BL interrupt_init
+	BL read_timer0
+	BL set_random_seed
 	BL init_model
-
 	; Set MR1 to half sec and reset it
 	LDR a1, =HALF_SEC
 	MOV a2, #1
@@ -138,6 +144,7 @@ begin_game
 	BL set_match0
 
 	BL reset_timer0
+
 	
 	LDR v1, =RUNNING_P
 	MOV a1, #1
@@ -151,6 +158,7 @@ game_loop
 
 	; Wait for user to restart game
 	BL disable_timer0
+	BL disable_timer_interrupts
 	LDR v1, =BEGIN_GAME
 game_over_end_loop
 	LDRB ip, [v1]
@@ -214,8 +222,8 @@ MR0_Interrupt
 		LDR v1, =DUG_SPRITE
 		BL fatal_collision1_dug
 		BL fatal_collision2_dug
-MR0_end
 		BL update_board
+MR0_end
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
 
 		ORR r1, r1, #1		; Clear Interrupt by OR-ing value from 0xE0004000 (r1) with #1
@@ -237,9 +245,10 @@ MR1_Interrupt
 		BL update_model
 
 		LDR v1, =CURRENT_TIME
-		LDR ip, [v1]
+		LDR v2, [v1]
 		BL get_match1
-		ADD a1, a1, ip
+		SUB a1, v2, a1
+		STR a1, [v1]
 		
 MR1_end
 		LDMFD SP!, {r0-r12, lr}   ; Restore registers r0-r12, lr
@@ -335,7 +344,7 @@ KEY_RIGHT
 		BAL	U0RDA_update
 
 ENTER_PRESS
-		;BL toggle_pause_game
+	;	BL toggle_pause_game
 		BAL U0RDA_end
 SPACEBAR_PRESS
 		BL spawn_bullet

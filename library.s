@@ -299,6 +299,17 @@ disable_timer0
 	LDMFD sp!, {lr}
 	BX lr
 
+
+	EXPORT	disable_timer_interrupts	
+disable_timer_interrupts
+	STMFD SP!,{lr}	; Store register lr on stack
+	
+	LDR a1, =TIMER0		; Load TIMER0 Base address
+	MOV a2, #0
+	STR a2, [a1, #T_MCR]		;
+	LDMFD sp!, {lr}
+	BX lr
+
 ; Set match register 0
 ; input:	a1	=	Timer match value
 ;			a2	=	Reset
@@ -481,6 +492,7 @@ interrupt_disable
 		LDR r1, [r0, #INT_CR] 
 		ORR r1, r1, #0x8000 ; External Interrupt 1
 		ORR r1, r1, #0x0040 ; UART0 Interrupt 
+		ORR r1, r1, #0x0010			; Timer 0 
 		STR r1, [r0, #INT_CR]
 		LDMFD sp!, {lr, r0, r1}
 		BX lr
@@ -489,19 +501,61 @@ interrupt_disable
 ; Pseudorandom number generator
 ; -----------------------------------------------------------------------------
 
+MAGIC_NUMBER_RAND	DCD	0xD80DA1	; Binary representation of the first 8 digits of pi after the decimal point
+RANDOM_SEED			DCD MAGIC_NUMBER_RAND
+	ALIGN
+
+; Set a seed for the random number
+; Input:	a1 = Seed ( if 0, no setting)
+
+	EXPORT set_random_seed
+set_random_seed
+	STMFD sp!, {v1}
+	
+	LDR v1, =RANDOM_SEED 
+	CMP a1, #0
+	LDREQ a1, =MAGIC_NUMBER_RAND
+
+	STR a1, [v1]
+	LDMFD sp!, {v1}
+	BX lr
+
+
 ; N-bit random number generator
 ; input		r0 (a1) = N
 ; output	r0 (a1) = N-bit random number
 get_nbit_rand
 	STMFD sp!, {lr, v1, v2}
-	; get LSB from timer0 as a random bit
-	; construct N-bit number
+	; construct N-bit number 
 	MOV v1, r0		; v1 holds bit count
+	
+; get LSB from timer0 as a random bit
+	;BL read_timer0	; timer value in r0
+	
+; use xorshift and read a value from bit 2 onwards (arbitarily chose 2)
+	BL xorshift_rand
+   	
 	RSB v1, v1, #32	; places to shift left
-	BL read_timer0	; timer value in r0
-	LSL r0, r0, v1	;
-	LSR r0, r0, v1	; 
+	LSL a1, a1, v1
+	LSR a1, a1, v1	
+	 
 	LDMFD sp!, {lr, v1, v2}
+	BX lr
+
+; XOR shift random number generator
+; output	r0 (a1) = unsigned random number
+xorshift_rand
+	; reference  https://en.wikipedia.org/wiki/Xorshift#Example_implementation
+	STMFD sp!, {v1}
+	
+	LDR v1, =RANDOM_SEED
+	LDR a1, [v1]
+	EOR a1, a1, a1, LSL #13
+	EOR a1, a1, a1, LSR #17
+	EOR a1, a1, a1, LSL #5
+	STR a1, [v1]
+
+	LDMFD sp!, {v1}
 	BX lr
 
 ; -----------------------------------------------------------------------------

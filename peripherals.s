@@ -17,7 +17,7 @@
 FLAG
 	DCD 0
 update_peripherals
-	STMFD SP!,{lr, a1, v1,ip}
+	STMFD SP!,{lr, v1,v2}
 
 set_lives_LED
 		LDR v1 , =DUG_SPRITE
@@ -65,11 +65,14 @@ green
 	BL illuminate_RGB_LED ;green
  	 ;check for pause
 	LDR v1, =PAUSE_GAME
-	LDRB v1, [v1]
-	CMP v1, #1
-	MOVEQ a1, #4 ; blue
-	BLEQ illuminate_RGB_LED
-	BNE check_for_shots
+	LDRB v2, [v1]
+	CMP v2, #0
+	BEQ check_for_shots
+	
+	MOV a1, #4 ; blue
+	BL illuminate_RGB_LED
+	BAL	exit
+
 check_for_shots	
 	LDR v1, =PUMP_SPRITE
 	LDR ip, [v1,#LIVES]
@@ -112,6 +115,6 @@ check_game_over
 	BNE exit
 
 exit
-	LDMFD SP!, {lr, a1, v1,ip}
+	LDMFD SP!, {lr, v1,v2}
 	BX LR
 	END

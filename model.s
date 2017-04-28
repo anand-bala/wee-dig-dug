@@ -33,6 +33,7 @@
 	IMPORT	wall_collision_dug
 	IMPORT	get_a_free_direction
 
+	IMPORT	pause_game_gui
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;	CONSTANTS		;
@@ -331,6 +332,8 @@ reset_board_loop
 	; set random Y in range [0-14]	 (4 bit)
 	MOV a1, #4
 	BL get_nbit_rand
+	CMP a1, #2
+	MOVLT a1, #2
 	CMP a1, #15
 	MOVGE a1, #14
 	STR a1, [v1, #Y_POS]		; update Y pos
@@ -377,6 +380,8 @@ reset_board_loop
 	; set random Y in range [0-14]	 (4 bit)
 	MOV a1, #4
 	BL get_nbit_rand
+	CMP a1, #2
+	MOVLT a1, #2
 	CMP a1, #15
 	MOVGE a1, #14
 	STR a1, [v1, #Y_POS]		; update Y pos
@@ -451,6 +456,10 @@ model_game_over
 	LDR v1, =BEGIN_GAME
 	MOV ip, #0
 	STRB ip, [v1]
+
+	LDR v1, =CURRENT_TIME
+	LDR ip, =TIME_120s
+	STR ip, [v1]
 
 	LDR v1, =GAME_OVER
 	MOV ip, #1
@@ -599,6 +608,8 @@ update_fygar
 ;	LDR a1, [v1, #X_POS]
 ;	LDR a2, [v2, #Y_POS]
 ;	BL get_a_free_direction
+	MOV a1, #2
+	BL get_nbit_rand
 	BL move_sprite_given_dir ; Update X and Y based on Direction
 	BL enemy_collision_with_sand_wall
 
@@ -613,7 +624,9 @@ update_pooka1
 	CMP a2, #0
 	BEQ update_pooka2
 ;	MOV a1, #2
-;	BL get_nbit_rand 
+;	BL get_nbit_rand	
+	MOV a1, #2
+	BL get_nbit_rand 
 	BL move_sprite_given_dir ; Update X and Y based on Direction
 	BL enemy_collision_with_sand_wall
 
@@ -688,11 +701,18 @@ post_movement_update
 	BL fatal_collision1_dug
 	BL fatal_collision2_dug
 
+	LDR v1, =CURRENT_TIME
+	LDR v2, [v1]
+	CMP v2, #0			; if timer reached 0
+	BLEQ model_game_over
+	CMP v2, #0
+	BEQ end_dont_update
 end_model_update
 ; Trigger GUI updates
 	BL update_board
 ; Trigger peripheral updates
 	BL update_peripherals
+end_dont_update
 	LDMFD sp!, {lr, v1-v8}
 	BX lr
 
@@ -830,9 +850,9 @@ get_sand_at_xy
 	MOVGT a1, #0
 	BGT get_xy_end	; end if x > 18
 
-	CMP a2, #0	; check
+	CMP a2, #1	; check
 	MOVLT a1, #0
-	BLT get_xy_end	; end if y < 0
+	BLT get_xy_end	; end if y < 1
 	CMP a2, #14 ; check
 	MOVGT a1, #0
 	BGT get_xy_end	; end if y > 14
@@ -874,7 +894,8 @@ just_fygar_update
 	; Check if LIVES != 0
 	CMP a2, #0
 	BEQ end_fygar_update
-
+	MOV a1, #2
+	BL get_nbit_rand
 	BL move_sprite_given_dir ; Update X and Y based on Direction
 	BL enemy_collision_with_sand_wall
 end_fygar_update
@@ -971,9 +992,9 @@ toggle_pause_game
 	LDR v1, =RUNNING_P
 	STRB a1, [v1]
 
-	; TODO: trigger gui
-
-	STMFD sp!, {lr, v1}
+	; trigger gui
+	BL pause_game_gui
+	LDMFD sp!, {lr, v1}
 	BX lr
 
 ; Kill Sprite
