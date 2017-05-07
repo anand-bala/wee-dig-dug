@@ -1,0 +1,16 @@
+\subsection{Controller}
+
+  \quad\textbf{FILES}: \texttt{controller.s}
+
+  The \textbf{Controller} mainly contains interrupt handlers, and it is also the entry point for the game.
+  In is, we do the following:
+
+  \begin{itemize}
+    \item Initialize timer and timer match registers for periodic interrupts.
+    \item Listen for UART0 interrupt, read the keystrokes and perform the corresponding action.
+    \item Listen for External Interrupt Button press and PAUSE the game.
+  \end{itemize}
+
+  The \textbf{Controller} is a relatively small component, responsible mainly for updating the \textbf{Model} via subroutines exposed by the \textbf{Model}.
+
+
