@@ -1,23 +1,28 @@
-  \subsection{Model}
+  \section{Model}
 
-  \textbf{FILES}: \texttt{model.s}, \texttt{collisions.s}
+  \begin{table}[H]
+  \begin{tabular}{rl}
+    \texttt{FILES}:         &\texttt{model.s}, \texttt{collisions.s} \\
+    \texttt{WRITTEN BY}:    &\texttt{Anand Balakrishnan (anandbal)}
+  \end{tabular}
+  \end{table}
 
   The \textbf{Model} maintains the internal representation of the board and triggers \textbf{View} updates. It exposed routines that allows the
   \textbf{Controller} to trigger updates on the \textbf{Model}.
 
-    \subsubsection{Implementation}
+    \subsection{Implementation}
 
     The \textbf{Model} consists of an \emph{``array''} (created using the \texttt{FILL} directive)
     of size $19 \times 15$ bytes, each byte representing a grain of sand.
 
-    The \textbf{Model} also consists of \texttt{DCD} tables to hold information of sprites. These tables are structured similar to a \texttt{struct}.
+    The \textbf{Model} also consists of \texttt{DCD} tables to hold information of sprites. These tables are structured similar to a \texttt{struct}, see \textbf{Listing \ref{lst:sprite-struct}}.
     There are also staticaly defined regions of memory that keep track of the various states the game could possibly be in,
     for example, \texttt{PAUSE}, \texttt{GAME\_OVER}.
     The \textbf{Model} is also responsible for keeping track of other variables of the game,
     such as, \texttt{LEVEL}, \texttt{HIGH\_SCORE}, \texttt{CURRENT\_SCORE} and \texttt{TIME}.
 
 
-    \begin{lstlisting}[float,floatplacement=H,caption={Structure for \texttt{SPRITE} data}]
+    \begin{lstlisting}[float,floatplacement=H,caption={Structure for \texttt{SPRITE} data},label={lst:sprite-struct}]
 SPRITE
 	DCD X_POS	; Holds X coordinate of the sprite
 	DCD Y_POS	; Holds Y coordinate of the sprite
@@ -30,7 +35,7 @@ SPRITE
 
     \end{lstlisting}
 
-    \subsubsection{Operations}
+    \subsection{Operations}
 
     Operations that are defined by the \textbf{Model} are:
 
@@ -44,5 +49,14 @@ SPRITE
       \item Update individual sprites.
       \item Spawn sprites.
     \end{itemize}
+
+    \subsubsection{Initialize and Reset Model}
+
+    \subsubsection{Game States and Representation}
+
+    \subsubsection{Update Model and Control Sprites}
+
+    \subsubsection{Collision Detection}
+
 
 
