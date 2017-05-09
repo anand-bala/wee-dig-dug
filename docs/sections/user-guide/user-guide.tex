@@ -1,0 +1,65 @@
+\section{User Guide}
+
+  \subsection{Introduction}
+
+
+  \qquad Welcome to \textbf{Wee Dig Dug}, a simplified, text-based version of the popular arcade game \textbf{Dig Dug} by Namco!.
+  The following project was written in ARM Assembly for the LPC2138 Education Board, with the ARM7TDMI architecture.
+
+  \subsection{Instructions}
+  
+  You are playing as Mr. Wee Dug, a glorious knight and miner (yes, it is an unconventional combination).
+  You have been recruited by some villagers to kill a few beasts and you get paid depending on what kind of beast you kill.
+
+  \begin{itemize}
+    \item Kill a \textbf{FYGAR}, a species of vicious dragons, known to take a 100 knights to defeat a single one, and you get \underline{100 points}.
+    \item Kill a \textbf{POOKA}, often mistaken for a cute, cuddly creature until it tries to eat you up, and you get \underline{50 points}.
+  \end{itemize}
+
+  To top it off, you will be locked up in an abandoned mine (abandoned because of these monsters obviously), and have 120s to kill all monsters, else you die (and don't ask me how you win, this is an arcade game). Best part is, you can mine the sand for 10 points per block, which is one of the perks of being a miner, right?
+
+  So, your objective is to earn as many points as you can within the 120 seconds. GOOD LUCK!
+
+  \subsection{Setup}
+
+  Before playing the game, please make sure of the following:
+
+  \begin{enumerate} 
+    \item You are connected to the correct COM port on PuTTy, and at a baud rate of \textbf{\underline{115200 baud}}.
+    \item Resize the console window to a minimum of $ 30 \text{ rows} \times 130 \text{ columns} $.
+    \item Be prepared to enjoy the game.
+  \end{enumerate}
+
+  To start playing, just flash the code onto the LPC2138 board.
+
+  \subsection{Controls}
+
+  \begin{table}[H]
+  \centering
+    \begin{tabular}{|l|l|}
+    \hline
+    Keystroke             & Action         \\ \hline
+    W                     & Move UP        \\
+    S                     & Move DOWN      \\
+    A                     & Move LEFT      \\
+    D                     & Move RIGHT     \\
+    SPACEBAR              & SHOOT a bullet \\
+    Momentary Push Button & PAUSE Game     \\ \hline
+    \end{tabular}
+  \end{table}
+
+  \subsection{Legend}
+
+  \begin{table}[H]
+  \centering
+    \begin{tabular}{|l|l|c|}
+    \hline
+    Symbol              &   Character           &   Points  \\ \hline
+    X                   &   FYGARs              &   100     \\
+    O                   &   POOKAs              &   50      \\
+    $\lor$, $\wedge$, $<$,$>$         &   DUG (YOU)           &   N/A     \\
+    \#                  &   SAND                &   10      \\
+    Z                   &   WALL                &   N/A     \\
+    EMPTY BLOCK         &   AIR                 &   N/A     \\ \hline
+    \end{tabular}
+  \end{table}

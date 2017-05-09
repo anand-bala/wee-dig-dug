@@ -1,0 +1,42 @@
+  \section{View}
+
+  The \textbf{View} is responsible for rendering \textbf{Model} onto the GUI. It possessed routines that
+  the \textbf{Model} uses to trigger updates to the GUI. This implementation was chosen as updates can
+  be triggered as and when the \textbf{Model} is updates.
+
+  \subsection{GUI (\textit{PuTTY} output) Operation}
+  \begin{table}[H]
+  \begin{tabular}{rl}
+    \texttt{FILE}:         &\texttt{gui.s}  \\
+    \texttt{PRIMARY CONTRIBUTOR}:    &\texttt{Anand Balakrishnan (anandbal)}
+  \end{tabular}
+  \end{table}
+
+    The \textbf{View} is holds many strings with ANSI escape sequences. Some of these stored strings are used to do the following:
+
+    \begin{itemize}
+      \item Change location of cursor.
+      \item Display game stats (time left, current refresh interval, level, high score, current score, etc).
+      \item Print empty board (just walls).
+    \end{itemize}
+
+    The \textbf{View} also holds routines whose primary function is to use these strings and manipulate GUI.
+    It exposes the following subroutines so as to allow the \textbf{Model} to trigger updates to GUI.
+
+    \begin{itemize}
+      \item \texttt{draw\_empty\_board}
+      \item \texttt{populate\_board}
+      \item \texttt{update\_board}
+      \item \texttt{clear\_sprite}
+    \end{itemize}
+
+    \subsubsection{Draw Empty Board}
+    
+    \subsubsection{Populate GUI with Sand and Sprites}
+
+    \subsubsection{Update GUI}
+
+    \subsubsection{Clear a Sprite from GUI}
+
+
+

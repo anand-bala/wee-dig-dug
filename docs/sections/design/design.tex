@@ -1,0 +1,47 @@
+\section{Design Overview}
+
+The game is designed based on the \textbf{Model-View-Controller (MVC)} architecture.
+This architecture is a common way of designing applications with a User Interface.
+In it, each of the following components is responsible for a particular task, and only that component is allowed to perform that task.
+
+\begin{table}[H]
+  \centering
+  \bgroup
+  \def\arraystretch{1.5}
+  \begin{tabularx}{\textwidth}{|p{3cm}|X|}
+
+    \hline
+    \multirow{2}{*}{\textbf{Model}}  
+      & This is the part of the framework responsible for maintainin the internal representation of the application.                            \\
+      & The \textbf{Model} in this game holds the location where sand is present, state of each sprite and state variables of the game.         \\
+    \hline
+
+    \multirow{2}{*}{\textbf{View}}   
+      & The \textbf{View} is responsible for rendering the \textbf{Model} onto the GUI.                                                         \\
+      & It contains routines that display the board, the sprites and the sand on a console screen.                                              \\
+    \hline
+
+    \multirow{2}{*}{\textbf{Controller}} 
+      & The \textbf{Controller} is responsible for handling user input and triggering changes in the \textbf{Model}.                            \\
+      & It contains the entry point for the game and interrupt handlers.                                                                        \\
+    \hline
+
+  \end{tabularx}
+  \egroup
+\end{table}
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{images/mvc-process.png}
+  \caption{\label{fig:mvc-process} The components of the framework interacting with each other (courtsey: Wikipdia)}
+\end{figure}
+
+\newpage
+\input{sections/design/controller.tex}
+\newpage
+\input{sections/design/model.tex}
+\newpage
+\input{sections/design/view.tex}
+
+

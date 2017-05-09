@@ -1,0 +1,22 @@
+\section{Controller Design}
+
+  \begin{table}[H]
+  \begin{tabular}{rl}
+    \texttt{FILES}:         &\texttt{controller.s}  \\
+    \texttt{WRITTEN BY}:    &\texttt{Anand Balakrishnan (anandbal)}
+  \end{tabular}
+  \end{table}
+
+
+  The \textbf{Controller} mainly contains interrupt handlers, and it is also the entry point for the game.
+  In is, we do the following:
+
+  \begin{itemize}
+    \item Initialize timer and timer match registers for periodic interrupts.
+    \item Listen for UART0 interrupt, read the keystrokes and perform the corresponding action.
+    \item Listen for External Interrupt Button press and PAUSE the game.
+  \end{itemize}
+
+  The \textbf{Controller} is a relatively small component, responsible mainly for updating the \textbf{Model} via subroutines exposed by the \textbf{Model}.
+
+

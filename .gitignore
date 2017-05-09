@@ -23,7 +23,8 @@
 *.mtc1
 *.out
 *.synctex.gz
-
+*.fls
+*.fdb_latexmk
 
 # Compiled Source #
 ###################
