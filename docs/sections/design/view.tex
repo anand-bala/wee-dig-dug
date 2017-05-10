@@ -2,11 +2,12 @@
 
   \subsection{Implementation}
 
-  The \textbf{View} is responsible for rendering \textbf{Model} onto the GUI. It possessed routines that
-  the \textbf{Model} uses to trigger updates to the GUI. This implementation was chosen as updates can
-  be triggered as and when the \textbf{Model} is updates.
+  The \textbf{View} is responsible for rendering \textbf{Model} onto the GUI and the hardware peropherals.
+  It possessed routines that the \textbf{Model} uses to trigger updates to the GUI and peripherals.
+  This implementation was chosen as updates can be triggered as and when the \textbf{Model} is updates and in a time-triggered fashion..
 
-  The \textbf{View} is holds many strings with ANSI escape sequences. Some of these stored strings are used to do the following:
+  The GUI component of the \textbf{View} holds many strings with ANSI escape sequences.
+  Some of these stored strings are used to do the following:
 
   \begin{itemize}
     \item Change location of cursor (see \textbf{Listing \ref{lst:esc-cursor-pos}}).
@@ -25,12 +26,13 @@ ESC_cursor_pos_cmd	= "f",0     ; End of sequence
 
 
   \subsection{GUI Operations (\textit{PuTTY} output)}
-  \begin{table}[H]
-  \begin{tabular}{rl}
-    \texttt{FILE}:         &\texttt{gui.s}  \\
-    \texttt{PRIMARY CONTRIBUTOR}:    &\texttt{Anand Balakrishnan (anandbal)}
-  \end{tabular}
-  \end{table}
+
+%  \begin{table}[H]
+%  \begin{tabular}{rl}
+%    \texttt{FILE}:         &\texttt{gui.s}  \\
+%    \texttt{PRIMARY CONTRIBUTOR}:    &\texttt{Anand Balakrishnan (anandbal)}
+%  \end{tabular}
+%  \end{table}
 
    The \textbf{View} also holds routines whose primary function is to use these strings and manipulate GUI.
     It exposes the following subroutines so as to allow the \textbf{Model} to trigger updates to GUI.
@@ -76,7 +78,9 @@ ESC_cursor_pos_cmd	= "f",0     ; End of sequence
   \subsection{Peripheral Operations/Updates}
  
   The subroutine \texttt{update\_peripherals}, updates the 7 segment display, the RGB LED,
-  and monochrome LEDs. This is responsible for displaying the game's states on the hardware
+  and monochrome LEDs. 
+  This routine is triggered periodically by \textbf{Model} by through \texttt{update\_model}.
+  This is responsible for displaying the game's states on the hardware
   peripherals. It reads the 4 game state variables, \texttt{RUNNING\_P}, \texttt{BEGIN\_GAME},
   \texttt{PAUSE\_GAME} and \texttt{GAME\_OVER}, and other variables like \texttt{LEVEL} and number of \texttt{LIVES}
   held by \textbf{Dug} to determine:
@@ -87,4 +91,7 @@ ESC_cursor_pos_cmd	= "f",0     ; End of sequence
     \item Number to display on the 7-segment display.
   \end{enumerate}
 
-  This routine is triggered periodically by \textbf{Model} by through \texttt{update\_model}.
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/update_peripherals.png}
+  \end{figure}
