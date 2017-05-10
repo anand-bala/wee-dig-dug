@@ -30,14 +30,39 @@ In it, each of the following components is responsible for a particular task, an
   \egroup
 \end{table}
 
-
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.4\textwidth]{images/mvc-process.png}
   \caption{\label{fig:mvc-process} The components of the framework interacting with each other (courtsey: Wikipdia)}
 \end{figure}
 
-\newpage
+
+\subsection{Division of Work}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|ll|ll|}
+\hline
+\textbf{Task}           &                       & \textbf{Primary Developer/Author}                       \\ \hline
+\textbf{CONTROLLER}     &                       & Anand Balakrishnan           & (\texttt{anandbal})   \\ \hline
+\textbf{MODEL}          &                       &                              &                       \\ \hline
+                        & \texttt{model.s}      & Anand Balakrishnan           & (\texttt{anandbal})   \\ 
+                        & \texttt{controller.s} & Anand Balakrishnan           & (\texttt{anandbal})   \\ \hline
+\textbf{VIEW}           &                       &                              &                       \\ \hline
+                        & \texttt{gui.s}        & Anand Balakrishnan           & (\texttt{anandbal})   \\
+                        & \texttt{peripherals.s}& Amrit Pal Singh              & (\texttt{asingh42})   \\ \hline
+\textbf{DOCUMENTATION}  &                              \\ \hline
+                        & User Guide            & Anand Balakrishnan           & (\texttt{anandbal})   \\ \hline
+                        & Design Overview       & Anand Balakrishnan           & (\texttt{anandbal})   \\ \hline
+                        & Controller            & Anand Balakrishnan           & (\texttt{anandbal})   \\ \hline
+                        & Model           & Anand Balakrishnan           & (\texttt{anandbal})   \\ \hline
+                        & View            &                               \\ \hline
+                        & GUI             & Anand Balakrishnan           & (\texttt{anandbal})   \\ \hline
+                        & Peripherals     & Amrit Pal Singh              & (\texttt{asingh42})   \\ \hline
+\end{tabular}
+\end{table}
+
+\newpagei
 \input{sections/design/controller.tex}
 \newpage
 \input{sections/design/model.tex}
