@@ -9,12 +9,21 @@
   The \textbf{View} is holds many strings with ANSI escape sequences. Some of these stored strings are used to do the following:
 
   \begin{itemize}
-    \item Change location of cursor.
+    \item Change location of cursor (see \textbf{Listing \ref{lst:esc-cursor-pos}}).
     \item Display game stats (time left, current refresh interval, level, high score, current score, etc).
     \item Print empty board (just walls).
   \end{itemize}
 
- 
+    \begin{lstlisting}[caption={Escape sequence to change cursor position},label={lst:esc-cursor-pos}]
+ESC_cursor_position	= 27,"["    ; Beginning of escape sequence
+ESC_cursor_pos_line	= "000"     ; This can be changed in code to change row
+ESC_cursor_pos_sep	= ";"
+ESC_cursor_pos_col	= "000"     ; This can be changed in code to change column
+ESC_cursor_pos_cmd	= "f",0     ; End of sequence
+
+  \end{lstlisting}
+
+
   \subsection{GUI Operations (\textit{PuTTY} output)}
   \begin{table}[H]
   \begin{tabular}{rl}
@@ -33,13 +42,36 @@
       \item \texttt{clear\_sprite}
     \end{itemize}
 
-    \subsubsection{Draw Empty Board}
-    
-    \subsubsection{Populate GUI with Sand and Sprites}
+
+ 
+    \subsubsection{Board Initialization}
+
+    The subroutines \texttt{draw\_empty\_board} and \texttt{populate\_board} are responsible for displaying the game board before the game begins.
+    The \texttt{draw\_empty\_board} subroutine does the following:
+
+    \begin{enumerate}
+      \item Output the string containing an empty board with the walls.
+      \item Output the initial game stats, game legend and controls.
+    \end{enumerate}
+
+    The \texttt{populate\_board} subroutine does the following:
+
+    \begin{enumerate}
+      \item For each sprite in \textbf{Model}, read the X and Y positions, and display it on the board.
+      \item For each coordinate on the board, check if the \textbf{Model} holds a block of sand at that coordinate and fill the board with sand accoding to the mode.
+    \end{enumerate}
 
     \subsubsection{Update GUI}
 
-    \subsubsection{Clear a Sprite from GUI}
+    The subroutine responsible for updating the entire GUI is \texttt{update\_board}. It is also a relatively small routine and does the following:
+    
+    \begin{enumerate}
+      \item Check if \texttt{GAME OVER}. If so, display Game Over GUI. Else.
+      \item Erase all sprites by loading in their coordinates and printing a ` ' at each coordinate.
+      \item For each sprite, check if the sprite is alive and print the appropriate GUI character at the sprite's current location.
+      \item Display game stats.
+    \end{enumerate}
 
 
+  \subsection{Peripheral Operations/Updates}
 
