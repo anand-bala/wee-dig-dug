@@ -74,4 +74,17 @@ ESC_cursor_pos_cmd	= "f",0     ; End of sequence
 
 
   \subsection{Peripheral Operations/Updates}
+ 
+  The subroutine \texttt{update\_peripherals}, updates the 7 segment display, the RGB LED,
+  and monochrome LEDs. This is responsible for displaying the game's states on the hardware
+  peripherals. It reads the 4 game state variables, \texttt{RUNNING\_P}, \texttt{BEGIN\_GAME},
+  \texttt{PAUSE\_GAME} and \texttt{GAME\_OVER}, and other variables like \texttt{LEVEL} and number of \texttt{LIVES}
+  held by \textbf{Dug} to determine:
+  
+  \begin{enumerate}
+    \item Color to display on the RGB LED.
+    \item Number of LEDs to illuminate in the standard single-color LEDs.
+    \item Number to display on the 7-segment display.
+  \end{enumerate}
 
+  This routine is triggered periodically by \textbf{Model} by through \texttt{update\_model}.
