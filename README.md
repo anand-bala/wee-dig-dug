@@ -1,13 +1,7 @@
----
-authors:
-- |
-    Anand Balakrishnan\
-    `anandbal@buffalo.edu`
-- |
-    Amrit Pal Singh\
-    `asingh42@buffalo.edu`
-title: 'Wee Dig Dug: Documentations'
----
+Wee Dig Dug
+===========
+
+Created By: [Anand Balakrishnan](anand-bala.github.io) and Amrit Pal Singh
 
 User Guide
 ==========
