@@ -32,5 +32,6 @@
 \fancyhf{}
 \renewcommand{\headrulewidth}{1pt}
 
+\RequirePackage{indentfirst}
 
 

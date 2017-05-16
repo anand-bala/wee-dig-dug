@@ -1,0 +1,12 @@
+
+
+The subroutine update_peripherals, updates the 7 segment display, the rgb Leds, and Leds and
+this routine is called model.s which maintains the internal representation of the board and
+triggers View updates, which then is called by controller.s. 7-segment display is updated when
+the user bumps up a level. LEDs represent the number of lives left. RGB LEDs represent the
+state of the game. Before game is played, RGB LED is white. When game is active the RGB
+LED is green. When paused, RGB LED is blue, when the game ends, RGB LED is purple and
+when shots fired, the RGB LED blinks red. Since the update_peripherals is called using a timer
+handler, the blinking functionally of RGB LED is achieved by setting a FLAG and every time a
+pump sprite moves, the flag is set to either 0 or a 1. If FLAG is 0, then the RDG LED flashes red.
+If Flag is 1 then RGB LED Flashes green.
